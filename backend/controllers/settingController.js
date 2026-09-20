@@ -90,6 +90,8 @@ const testCloudinaryConnection = async (req, res) => {
       errMsg = 'Invalid API Key: API Key match nahi hui. Kripya check karein.';
     } else if (errMsg.includes('Must supply api_secret')) {
       errMsg = 'API Secret missing hai. Kripya API Secret dalein.';
+    } else if (errMsg.includes('403') || errMsg.includes('unexpected status code - 403')) {
+      errMsg = 'Cloudinary 403 Forbidden: Cloud Name, API Key ya Secret incorrect hai. Kripya Dashboard se teeno values cross-check karke dalein.';
     }
     res.status(400).json({
       success: false,

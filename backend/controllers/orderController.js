@@ -429,6 +429,8 @@ const deliverOrder = async (req, res) => {
           userFriendlyMsg = 'Cloudinary "Invalid Signature" error: Aapka Cloudinary API Secret galat hai ya match nahi ho raha. Kripya /admin/settings me jakar Cloudinary Console se sahi API Secret copy karke dalein aur "Test Connection" dabakar verify karein.';
         } else if (userFriendlyMsg.includes('Invalid API Key') || userFriendlyMsg.includes('Unknown API key')) {
           userFriendlyMsg = 'Cloudinary "Invalid API Key" error: Aapki API Key sahi nahi hai. Kripya /admin/settings me check karein.';
+        } else if (userFriendlyMsg.includes('403') || userFriendlyMsg.includes('unexpected status code - 403')) {
+          userFriendlyMsg = 'Cloudinary 403 Forbidden Error: Aapka Cloud Name, API Key, ya Secret galat hai. Kripya /admin/settings me jakar credentials verify karein.';
         }
 
         return res.status(500).json({

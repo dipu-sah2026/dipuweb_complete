@@ -86,6 +86,8 @@ router.post('/media', protect, adminOnly, upload.videoUpload.single('file'), asy
       errorMsg = 'Cloudinary "Invalid API Key" error: Aapki API Key match nahi hui. Kripya /admin/settings me check karein.';
     } else if (errorMsg.includes('Must supply api_secret')) {
       errorMsg = 'Cloudinary API Secret missing hai. Kripya /admin/settings me jakar API Secret dalein.';
+    } else if (errorMsg.includes('403') || errorMsg.includes('unexpected status code - 403')) {
+      errorMsg = 'Cloudinary 403 Forbidden Error: Aapka Cloud Name, API Key, ya API Secret galat hai ya account active nahi hai. Kripya /admin/settings me jakar Cloud Name (lower-case), API Key, aur Secret verify karein.';
     }
 
     res.status(400).json({
