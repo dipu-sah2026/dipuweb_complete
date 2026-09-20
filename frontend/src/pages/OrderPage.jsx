@@ -184,11 +184,11 @@ const OrderPage = () => {
     const fetchData = async () => {
       try {
         const sRes = await api.get('/services');
-        if (sRes.data?.data && sRes.data.data.length > 0) {
+        if (sRes.data && Array.isArray(sRes.data.data)) {
           setServices(sRes.data.data);
         }
       } catch (err) {
-        console.log('Using default services');
+        console.log('Using default services on network error');
       }
 
       try {

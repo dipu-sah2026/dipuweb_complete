@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Play, 
@@ -11,8 +11,28 @@ import {
   Layers, 
   Zap 
 } from 'lucide-react';
+import api from '../services/api';
 
 const Hero = () => {
+  const [startingPrice, setStartingPrice] = useState(100);
+  const [phone, setPhone] = useState('7481968724');
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await api.get('/settings');
+        if (res.data?.data) {
+          if (res.data.data.startingPrice) setStartingPrice(res.data.data.startingPrice);
+          if (res.data.data.whatsappNumber) setPhone(res.data.data.whatsappNumber.replace(/\D/g, ''));
+        }
+      } catch (err) {
+        // Fallback to default
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const cleanPhone = phone.startsWith('91') ? phone : `91${phone}`;
   return (
     <section className="relative pt-8 pb-20 md:pt-14 md:pb-28 overflow-hidden bg-gradient-to-b from-brand-dark via-[#0a0f1d] to-brand-dark">
       
@@ -58,7 +78,7 @@ const Hero = () => {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-3xl sm:text-4xl font-black text-brand-yellow drop-shadow-md">
-                  Only ₹100
+                  Only ₹{startingPrice}
                 </span>
                 <span className="text-xs sm:text-sm text-slate-300 font-semibold leading-tight text-left">
                   Per Video <br />
@@ -75,18 +95,18 @@ const Hero = () => {
               className="w-full sm:w-auto flex items-center justify-center gap-3 bg-brand-yellow hover:bg-brand-yellowHover text-black font-black text-base px-8 py-4 rounded-2xl shadow-xl shadow-yellow-500/30 transition-all transform hover:-translate-y-1"
             >
               <Zap className="w-5 h-5 fill-black" />
-              <span>Order Video Now (₹100)</span>
+              <span>Order Video Now (₹{startingPrice})</span>
               <ArrowRight className="w-5 h-5" />
             </Link>
 
             <a
-              href="https://wa.me/917481968724?text=Hello%20Dipu%2C%20I%20saw%20your%20website%20dipueditx.in%20and%20want%20to%20order%20AI%20video%20editing%20services!"
+              href={`https://wa.me/${cleanPhone}?text=Hello%20Dipu%2C%20I%20saw%20your%20website%20dipueditx.in%20and%20want%20to%20order%20AI%20video%20editing%20services!`}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full sm:w-auto flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-base px-7 py-4 rounded-2xl shadow-xl shadow-emerald-600/30 transition-all transform hover:-translate-y-1"
             >
               <PhoneCall className="w-5 h-5" />
-              <span>WhatsApp: 7481968724</span>
+              <span>WhatsApp: {phone}</span>
             </a>
 
             <Link

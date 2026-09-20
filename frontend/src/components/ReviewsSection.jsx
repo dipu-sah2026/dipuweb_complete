@@ -38,7 +38,8 @@ const DEFAULT_REVIEWS = [
 ];
 
 const ReviewsSection = () => {
-  const [reviews, setReviews] = useState(DEFAULT_REVIEWS);
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     clientName: '',
@@ -54,11 +55,14 @@ const ReviewsSection = () => {
     const fetchReviews = async () => {
       try {
         const res = await api.get('/reviews');
-        if (res.data?.data && res.data.data.length > 0) {
+        if (res.data && Array.isArray(res.data.data)) {
           setReviews(res.data.data);
         }
       } catch (err) {
-        // Fallback to DEFAULT_REVIEWS
+        console.log('Reviews fetch error');
+        setReviews(DEFAULT_REVIEWS);
+      } finally {
+        setLoading(false);
       }
     };
     fetchReviews();
@@ -117,12 +121,26 @@ const ReviewsSection = () => {
         </div>
 
         {/* Reviews Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {reviews.map((rev) => (
-            <div
-              key={rev._id}
-              className="bg-brand-card border border-brand-border rounded-2xl p-6 flex flex-col justify-between hover:border-brand-yellow/40 transition-all shadow-md"
+        {reviews.length === 0 ? (
+          <div className="text-center py-12 bg-brand-card rounded-2xl border border-dashed border-brand-border p-6 max-w-xl mx-auto">
+            <Star className="w-10 h-10 text-brand-yellow/40 mx-auto mb-2" />
+            <h3 className="text-base font-bold text-white mb-1">No Reviews Yet</h3>
+            <p className="text-xs text-slate-400 mb-4">Be the first client to leave feedback for DipuEditX!</p>
+            <button
+              onClick={() => setModalOpen(true)}
+              className="inline-flex items-center gap-2 bg-brand-yellow text-black font-black text-xs px-4 py-2.5 rounded-xl hover:bg-yellow-400 transition-colors"
             >
+              <MessageSquarePlus className="w-4 h-4" />
+              <span>Submit Your Review</span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {reviews.map((rev) => (
+              <div
+                key={rev._id}
+                className="bg-brand-card border border-brand-border rounded-2xl p-6 flex flex-col justify-between hover:border-brand-yellow/40 transition-all shadow-md"
+              >
               <div>
                 {/* Rating Stars */}
                 <div className="flex items-center gap-1 mb-3">
@@ -165,6 +183,7 @@ const ReviewsSection = () => {
             </div>
           ))}
         </div>
+        )}
 
       </div>
 

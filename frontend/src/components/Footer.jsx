@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Play, 
@@ -12,8 +12,24 @@ import {
   ShieldAlert,
   Sparkles
 } from 'lucide-react';
+import api, { DEFAULT_SETTINGS } from '../services/api';
 
 const Footer = () => {
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await api.get('/settings');
+        if (res.data?.data) {
+          setSettings(res.data.data);
+        }
+      } catch (err) {
+        // Fallback to DEFAULT_SETTINGS
+      }
+    };
+    fetchSettings();
+  }, []);
   return (
     <footer className="bg-slate-950 border-t border-brand-border pt-16 pb-8 text-slate-400">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -127,17 +143,17 @@ const Footer = () => {
             <h4 className="text-white font-bold text-sm tracking-wider uppercase">Contact Dipu</h4>
             <div className="space-y-2 text-sm">
               <a 
-                href="https://wa.me/917481968724"
+                href={`https://wa.me/${(settings.whatsappNumber || '7481968724').replace(/\D/g, '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-semibold"
               >
                 <Phone className="w-4 h-4" />
-                <span>+91 7481968724 (WhatsApp)</span>
+                <span>+91 {settings.whatsappNumber || '7481968724'} (WhatsApp)</span>
               </a>
               <div className="flex items-center gap-2 text-slate-400">
                 <Mail className="w-4 h-4 text-brand-yellow" />
-                <span>contact@dipueditx.in</span>
+                <span>{settings.contactEmail || 'contact@dipueditx.in'}</span>
               </div>
               <p className="text-xs text-slate-500 pt-1">
                 Domain: <strong className="text-slate-300">dipueditx.in</strong>
@@ -149,7 +165,7 @@ const Footer = () => {
               <p className="text-xs uppercase text-slate-500 font-bold mb-2">Connect with us:</p>
               <div className="flex gap-2">
                 <a 
-                  href="https://youtube.com" 
+                  href={settings.socialLinks?.youtube || 'https://youtube.com'} 
                   target="_blank" 
                   rel="noreferrer" 
                   className="w-9 h-9 rounded-lg bg-red-600/20 text-red-500 hover:bg-red-600 hover:text-white flex items-center justify-center transition-colors"
@@ -157,7 +173,7 @@ const Footer = () => {
                   <Youtube className="w-4 h-4" />
                 </a>
                 <a 
-                  href="https://instagram.com" 
+                  href={settings.socialLinks?.instagram || 'https://instagram.com'} 
                   target="_blank" 
                   rel="noreferrer" 
                   className="w-9 h-9 rounded-lg bg-pink-600/20 text-pink-400 hover:bg-pink-600 hover:text-white flex items-center justify-center transition-colors"
@@ -165,7 +181,7 @@ const Footer = () => {
                   <Instagram className="w-4 h-4" />
                 </a>
                 <a 
-                  href="https://facebook.com" 
+                  href={settings.socialLinks?.facebook || 'https://facebook.com'} 
                   target="_blank" 
                   rel="noreferrer" 
                   className="w-9 h-9 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-colors"

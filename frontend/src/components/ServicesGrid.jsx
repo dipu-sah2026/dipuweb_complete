@@ -29,7 +29,7 @@ const iconMap = {
 };
 
 const ServicesGrid = ({ showAll = false }) => {
-  const [services, setServices] = useState(DEFAULT_SERVICES);
+  const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -37,11 +37,12 @@ const ServicesGrid = ({ showAll = false }) => {
     const fetchServices = async () => {
       try {
         const res = await api.get('/services');
-        if (res.data?.data && res.data.data.length > 0) {
+        if (res.data && Array.isArray(res.data.data)) {
           setServices(res.data.data);
         }
       } catch (err) {
-        console.log('Using default services data');
+        console.log('Services fetch error, using fallback');
+        setServices(DEFAULT_SERVICES);
       } finally {
         setLoading(false);
       }
@@ -54,6 +55,24 @@ const ServicesGrid = ({ showAll = false }) => {
   const handleOrderService = (service) => {
     navigate('/order', { state: { preselectedService: service } });
   };
+
+  if (loading) {
+    return null;
+  }
+
+  if (services.length === 0 && !showAll) {
+    return null;
+  }
+
+  if (services.length === 0 && showAll) {
+    return (
+      <div className="max-w-md mx-auto my-16 text-center p-8 bg-slate-900/60 rounded-3xl border border-dashed border-slate-800">
+        <Sparkles className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+        <h3 className="text-lg font-bold text-white mb-1">No Services Available</h3>
+        <p className="text-xs text-slate-400">Services created in the Admin Panel will appear here.</p>
+      </div>
+    );
+  }
 
   return (
     <section className="py-20 bg-brand-dark relative">

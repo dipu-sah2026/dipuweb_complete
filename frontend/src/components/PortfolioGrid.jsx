@@ -23,7 +23,8 @@ const categories = [
 ];
 
 const PortfolioGrid = ({ limit }) => {
-  const [portfolio, setPortfolio] = useState(DEFAULT_PORTFOLIO);
+  const [portfolio, setPortfolio] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('All');
   const [selectedVideo, setSelectedVideo] = useState(null);
   const navigate = useNavigate();
@@ -32,11 +33,13 @@ const PortfolioGrid = ({ limit }) => {
     const fetchPortfolio = async () => {
       try {
         const res = await api.get('/portfolio');
-        if (res.data?.data && res.data.data.length > 0) {
+        if (res.data && Array.isArray(res.data.data)) {
           setPortfolio(res.data.data);
         }
       } catch (err) {
-        console.log('Using default portfolio data');
+        console.log('Unable to fetch portfolio data');
+      } finally {
+        setLoading(false);
       }
     };
     fetchPortfolio();
@@ -47,6 +50,28 @@ const PortfolioGrid = ({ limit }) => {
     : portfolio.filter((item) => item.category === activeCategory);
 
   const displayItems = limit ? filteredItems.slice(0, limit) : filteredItems;
+
+  // If loading, don't show stale items
+  if (loading) {
+    return null;
+  }
+
+  // If admin deleted all portfolio items:
+  // On Home page (limit set), completely hide this section
+  if (portfolio.length === 0 && limit) {
+    return null;
+  }
+
+  // On dedicated /portfolio page, show clean empty state
+  if (portfolio.length === 0 && !limit) {
+    return (
+      <div className="max-w-md mx-auto my-16 text-center p-8 bg-slate-900/60 rounded-3xl border border-dashed border-slate-800">
+        <Film className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+        <h3 className="text-lg font-bold text-white mb-1">No Showcase Videos Available</h3>
+        <p className="text-xs text-slate-400">Videos added in Admin Panel will appear here.</p>
+      </div>
+    );
+  }
 
   return (
     <section className="py-20 bg-slate-950/80 border-t border-brand-border/40">

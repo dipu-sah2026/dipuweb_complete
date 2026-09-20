@@ -1,16 +1,35 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { MessageCircle } from 'lucide-react';
+import api from '../services/api';
 
 const WhatsAppFloat = () => {
+  const [phone, setPhone] = useState('7481968724');
+
+  useEffect(() => {
+    const fetchPhone = async () => {
+      try {
+        const res = await api.get('/settings');
+        if (res.data?.data?.whatsappNumber) {
+          setPhone(res.data.data.whatsappNumber.replace(/\D/g, ''));
+        }
+      } catch (err) {
+        // Fallback to default
+      }
+    };
+    fetchPhone();
+  }, []);
+
+  const cleanNumber = phone.startsWith('91') ? phone : `91${phone}`;
+
   return (
     <div className="fixed bottom-6 right-6 z-40 flex items-center gap-2 group">
       {/* Tooltip on hover */}
       <div className="hidden md:block opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-xs font-bold py-1.5 px-3 rounded-xl border border-brand-border shadow-xl">
-        Chat with Dipu Sah (7481968724)
+        Chat on WhatsApp ({phone})
       </div>
 
       <a
-        href="https://wa.me/917481968724?text=Hello%20Dipu%2C%20I%20visited%20dipueditx.in%20and%20want%20to%20order%20video%20editing%20services!"
+        href={`https://wa.me/${cleanNumber}?text=Hello%20Dipu%2C%20I%20visited%20dipueditx.in%20and%20want%20to%20order%20video%20editing%20services!`}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Chat on WhatsApp"

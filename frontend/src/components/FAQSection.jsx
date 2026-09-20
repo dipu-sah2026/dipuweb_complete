@@ -30,7 +30,8 @@ const DEFAULT_FAQS = [
 ];
 
 const FAQSection = () => {
-  const [faqs, setFaqs] = useState(DEFAULT_FAQS);
+  const [faqs, setFaqs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [openIndex, setOpenIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -38,11 +39,14 @@ const FAQSection = () => {
     const fetchFaqs = async () => {
       try {
         const res = await api.get('/faqs');
-        if (res.data?.data && res.data.data.length > 0) {
+        if (res.data && Array.isArray(res.data.data)) {
           setFaqs(res.data.data);
         }
       } catch (err) {
-        // Fallback to DEFAULT_FAQS
+        console.log('FAQ fetch error');
+        setFaqs(DEFAULT_FAQS);
+      } finally {
+        setLoading(false);
       }
     };
     fetchFaqs();
@@ -53,6 +57,10 @@ const FAQSection = () => {
       f.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
       f.answer.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (loading || faqs.length === 0) {
+    return null;
+  }
 
   return (
     <section className="py-20 bg-slate-950/80 border-t border-brand-border/40">

@@ -1,13 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Flame } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import api from '../services/api';
 
 const CountdownTimer = () => {
+  const [enabled, setEnabled] = useState(true);
+  const [noticeText, setNoticeText] = useState('Special Launch Discount: Only ₹100 per video! Offer ends in:');
   const [timeLeft, setTimeLeft] = useState({
     hours: 23,
     minutes: 42,
     seconds: 15,
   });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await api.get('/settings');
+        if (res.data?.data) {
+          if (res.data.data.enableNotice !== undefined) {
+            setEnabled(Boolean(res.data.data.enableNotice));
+          }
+          if (res.data.data.bannerNotice) {
+            setNoticeText(res.data.data.bannerNotice);
+          }
+        }
+      } catch (err) {
+        // Keep default
+      }
+    };
+    fetchSettings();
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -22,13 +44,17 @@ const CountdownTimer = () => {
     return () => clearInterval(timer);
   }, []);
 
+  if (!enabled) {
+    return null;
+  }
+
   return (
     <div className="bg-gradient-to-r from-red-950/70 via-slate-900 to-red-950/70 border-y border-red-500/30 py-3 px-4">
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
         <div className="flex items-center gap-2">
           <Flame className="w-5 h-5 text-red-500 animate-bounce" />
           <span className="text-xs sm:text-sm font-black text-white">
-            Special Launch Discount: Only ₹100 per video! Offer ends in:
+            {noticeText}
           </span>
         </div>
 
