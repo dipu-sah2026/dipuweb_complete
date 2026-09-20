@@ -253,28 +253,7 @@ const OrderPage = () => {
     }, 2500);
   };
 
-  const getAppPaymentUri = (scheme) => {
-    // Omit 'tn' parameter to bypass NPCI P2P security filter on personal VPAs
-    const base = `pa=${activeUpiId}&pn=${encodeURIComponent(activeUpiName)}&am=${finalPrice}&cu=INR`;
-    const standardUpi = `upi://pay?${base}`;
-    const isAndroid = /android/i.test(navigator.userAgent || '');
-
-    if (isAndroid) {
-      if (scheme === 'phonepe') {
-        return `intent://pay?${base}#Intent;scheme=upi;package=com.phonepe.app;end`;
-      }
-      if (scheme === 'gpay') {
-        return `intent://pay?${base}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
-      }
-      if (scheme === 'paytm') {
-        return `intent://pay?${base}#Intent;scheme=upi;package=net.one97.paytm;end`;
-      }
-    }
-
-    return standardUpi;
-  };
-
-  const handleMobilePay = async (scheme, appName) => {
+  const handleMobilePay = async () => {
     // 1. Auto-copy UPI ID to clipboard
     try {
       await navigator.clipboard.writeText(activeUpiId);
@@ -285,15 +264,11 @@ const OrderPage = () => {
     }
 
     setPaymentAppOpened(true);
-    setClipboardNotice(`✅ UPI ID "${activeUpiId}" auto-copied! Opening ${appName}... (Agar app me security decline aaye, to "Pay to UPI ID" me paste karke ₹${finalPrice} pay karein).`);
+    setClipboardNotice(`✅ UPI ID "${activeUpiId}" auto-copied! Opening UPI app... Payment complete karke 12-digit UTR paste karein.`);
 
-    // 2. Open payment app intent with fallback
-    const uri = getAppPaymentUri(scheme);
-    try {
-      window.location.href = uri;
-    } catch (err) {
-      window.location.href = `upi://pay?pa=${activeUpiId}&pn=${encodeURIComponent(activeUpiName)}&am=${finalPrice}&cu=INR`;
-    }
+    // 2. Open standard NPCI UPI intent (works smoothly across all mobile devices & apps)
+    const upiUri = `upi://pay?pa=${activeUpiId}&pn=${encodeURIComponent(activeUpiName)}&am=${finalPrice}&cu=INR`;
+    window.location.href = upiUri;
   };
 
   // Auto-detect 12-digit UTR from clipboard when user returns to website tab after payment app
@@ -941,39 +916,14 @@ const OrderPage = () => {
                       </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleMobilePay('phonepe', 'PhonePe')}
-                        className="py-2.5 px-3 bg-[#5f259f] hover:bg-[#4d1d82] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow transition-all active:scale-95"
-                      >
-                        <span>🟣 PhonePe</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleMobilePay('gpay', 'Google Pay')}
-                        className="py-2.5 px-3 bg-[#1a73e8] hover:bg-[#1557b0] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow transition-all active:scale-95"
-                      >
-                        <span>🟢 Google Pay</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleMobilePay('paytm', 'Paytm')}
-                        className="py-2.5 px-3 bg-[#00b9f1] hover:bg-[#0092bf] text-black font-black text-xs rounded-xl flex items-center justify-center gap-1.5 shadow transition-all active:scale-95"
-                      >
-                        <span>🔵 Paytm</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleMobilePay('any', 'UPI App')}
-                        className="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-brand-yellow font-bold text-xs rounded-xl border border-brand-yellow/30 flex items-center justify-center gap-1.5 shadow transition-all active:scale-95"
-                      >
-                        <span>🟡 Any UPI App</span>
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={handleMobilePay}
+                      className="w-full py-3.5 px-4 bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400 text-black font-black text-xs sm:text-sm rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/20 active:scale-95 transition-all"
+                    >
+                      <Smartphone className="w-4 h-4 fill-black" />
+                      <span>⚡ Tap to Pay via Any UPI App (PhonePe / GPay / Paytm)</span>
+                    </button>
 
                     {paymentAppOpened && (
                       <div className="p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-[11px] text-emerald-300 flex items-center justify-between">
