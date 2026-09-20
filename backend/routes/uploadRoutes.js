@@ -32,23 +32,24 @@ router.post('/media', protect, adminOnly, upload.videoUpload.single('file'), asy
     // Determine resource type
     const isVideo = req.file.mimetype.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm|m4v)$/i.test(req.file.originalname);
     const resourceType = isVideo ? 'video' : 'auto';
+    const uniquePublicId = `${isVideo ? 'vid' : 'media'}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
     console.log(`[Upload API] Uploading ${req.file.originalname} (${(req.file.size / (1024 * 1024)).toFixed(2)} MB) to Cloudinary folder: ${folder}...`);
 
     let uploadRes;
-    if (isVideo && typeof config.cloudinary.uploader.upload_large === 'function') {
+    const uploadOptions = {
+      folder,
+      resource_type: resourceType,
+      public_id: uniquePublicId,
+    };
+
+    if (isVideo && req.file.size > 20 * 1024 * 1024 && typeof config.cloudinary.uploader.upload_large === 'function') {
       uploadRes = await config.cloudinary.uploader.upload_large(filePath, {
-        folder,
-        resource_type: 'video',
-        overwrite: true,
+        ...uploadOptions,
         chunk_size: 6000000, // 6MB chunks
       });
     } else {
-      uploadRes = await config.cloudinary.uploader.upload(filePath, {
-        folder,
-        resource_type: resourceType,
-        overwrite: true,
-      });
+      uploadRes = await config.cloudinary.uploader.upload(filePath, uploadOptions);
     }
 
     // Remove local temp file
