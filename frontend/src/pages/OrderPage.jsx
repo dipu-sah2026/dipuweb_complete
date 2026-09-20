@@ -255,10 +255,22 @@ const OrderPage = () => {
 
   const getAppPaymentUri = (scheme) => {
     const base = `pa=${activeUpiId}&pn=${encodeURIComponent(activeUpiName)}&am=${finalPrice}&cu=INR&tn=${encodeURIComponent('DipuEditX Video Order')}`;
-    if (scheme === 'phonepe') return `phonepe://pay?${base}`;
-    if (scheme === 'gpay') return `tez://upi/pay?${base}`;
-    if (scheme === 'paytm') return `paytmmp://pay?${base}`;
-    return `upi://pay?${base}`;
+    const standardUpi = `upi://pay?${base}`;
+    const isAndroid = /android/i.test(navigator.userAgent || '');
+
+    if (isAndroid) {
+      if (scheme === 'phonepe') {
+        return `intent://pay?${base}#Intent;scheme=upi;package=com.phonepe.app;end`;
+      }
+      if (scheme === 'gpay') {
+        return `intent://pay?${base}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
+      }
+      if (scheme === 'paytm') {
+        return `intent://pay?${base}#Intent;scheme=upi;package=net.one97.paytm;end`;
+      }
+    }
+
+    return standardUpi;
   };
 
   const handleMobilePay = async (scheme, appName) => {
@@ -274,10 +286,51 @@ const OrderPage = () => {
     setPaymentAppOpened(true);
     setClipboardNotice(`✅ UPI ID "${activeUpiId}" copied! Opening ${appName}... Payment complete karke 12-digit UTR copy karein.`);
 
-    // 2. Open payment app intent
+    // 2. Open payment app intent with fallback
     const uri = getAppPaymentUri(scheme);
-    window.location.href = uri;
+    try {
+      window.location.href = uri;
+    } catch (err) {
+      window.location.href = `upi://pay?pa=${activeUpiId}&pn=${encodeURIComponent(activeUpiName)}&am=${finalPrice}&cu=INR&tn=${encodeURIComponent('DipuEditX Video Order')}`;
+    }
   };
+
+  // Auto-detect 12-digit UTR from clipboard when user returns to website tab after payment app
+  useEffect(() => {
+    const autoDetectUtr = async () => {
+      if (document.visibilityState === 'visible' && paymentAppOpened && !utrNumber) {
+        try {
+          const text = await navigator.clipboard.readText();
+          if (text && text.trim()) {
+            const cleanText = text.trim();
+            const match = cleanText.match(/\b\d{12}\b/);
+            const candidate = match ? match[0] : null;
+
+            if (candidate) {
+              const check = validateUtrFormat(candidate);
+              if (check.valid) {
+                setUtrNumber(candidate);
+                setUtrError('');
+                setClipboardNotice(`🎉 12-Digit UTR (${candidate}) auto-detected & filled! Niche Submit Order click karein.`);
+                const el = document.getElementById('step-4-utr');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }
+            }
+          }
+        } catch (e) {
+          // Silent catch if clipboard permission prompt is dismissed
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', autoDetectUtr);
+    window.addEventListener('focus', autoDetectUtr);
+
+    return () => {
+      document.removeEventListener('visibilitychange', autoDetectUtr);
+      window.removeEventListener('focus', autoDetectUtr);
+    };
+  }, [paymentAppOpened, utrNumber]);
 
   const handlePasteUtrFromClipboard = async () => {
     try {
