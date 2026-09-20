@@ -16,7 +16,8 @@ import {
   Printer,
   X,
   Send,
-  Sparkles
+  Sparkles,
+  Play
 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -25,12 +26,11 @@ const ClientDashboard = () => {
   const { user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // Revision Modal state
   const [revisionOrder, setRevisionOrder] = useState(null);
   const [revisionNotes, setRevisionNotes] = useState('');
-  const [revisionSubmitting, setRevisionSubmitting] = useState(false);
-  const [revisionSuccess, setRevisionSuccess] = useState('');
+  const [submittingRevision, setSubmittingRevision] = useState(false);
+  const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState(null);
+  const [playingVideoOrder, setPlayingVideoOrder] = useState(null);
 
   // Invoice Modal state
   const [invoiceOrder, setInvoiceOrder] = useState(null);
@@ -200,19 +200,39 @@ const ClientDashboard = () => {
                     </div>
                   </div>
 
+                  {/* Admin Note if available */}
+                  {ord.adminNotes && (
+                    <div className="bg-slate-900/90 p-3 rounded-2xl border border-brand-yellow/30 text-xs text-slate-300">
+                      <span className="text-brand-yellow font-bold block mb-0.5">💬 Message from Dipu Sah:</span>
+                      <p>{ord.adminNotes}</p>
+                    </div>
+                  )}
+
                   {/* Actions & Deliverables */}
                   <div className="pt-2 flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
                       {ord.status === 'Completed' && ord.deliveryLink ? (
-                        <a
-                          href={ord.deliveryLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs px-5 py-2.5 rounded-xl shadow-lg transition-all"
-                        >
-                          <Download className="w-4 h-4" />
-                          <span>Download Final Video Files</span>
-                        </a>
+                        <>
+                          {(ord.deliveryType === 'video_upload' || ord.deliveryLink.includes('cloudinary') || ord.deliveryLink.match(/\.(mp4|mov|webm)$/i)) && (
+                            <button
+                              type="button"
+                              onClick={() => setPlayingVideoOrder(ord)}
+                              className="flex items-center gap-1.5 bg-cyan-500 hover:bg-cyan-400 text-black font-black text-xs px-4 py-2.5 rounded-xl shadow-lg transition-all"
+                            >
+                              <Play className="w-3.5 h-3.5 fill-black" />
+                              <span>Watch Video</span>
+                            </button>
+                          )}
+                          <a
+                            href={ord.deliveryLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs px-5 py-2.5 rounded-xl shadow-lg transition-all"
+                          >
+                            <Download className="w-4 h-4" />
+                            <span>Download Final Video</span>
+                          </a>
+                        </>
                       ) : (
                         <span className="text-xs text-amber-400 font-bold flex items-center gap-1.5">
                           <Clock className="w-4 h-4" />
@@ -349,6 +369,56 @@ const ClientDashboard = () => {
                 className="px-4 py-2.5 bg-slate-800 text-slate-300 text-xs font-bold rounded-xl"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Video Streaming Modal */}
+      {playingVideoOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
+          <div className="relative w-full max-w-3xl bg-slate-900 border border-brand-border rounded-3xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-brand-border">
+              <div>
+                <h3 className="text-base font-black text-white flex items-center gap-2">
+                  <span>{playingVideoOrder.serviceTitle}</span>
+                  <span className="text-brand-yellow font-mono text-xs">#{playingVideoOrder.orderId}</span>
+                </h3>
+                <p className="text-xs text-slate-400">Cloudinary High-Speed Video Player</p>
+              </div>
+              <button
+                onClick={() => setPlayingVideoOrder(null)}
+                className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="relative aspect-video rounded-2xl overflow-hidden bg-black flex items-center justify-center border border-slate-800">
+              <video
+                src={playingVideoOrder.deliveryLink}
+                controls
+                autoPlay
+                className="w-full h-full object-contain"
+              />
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <a
+                href={playingVideoOrder.deliveryLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-brand-yellow hover:underline flex items-center gap-1 font-bold"
+              >
+                <Download className="w-4 h-4" />
+                <span>Direct Download Link</span>
+              </a>
+              <button
+                onClick={() => setPlayingVideoOrder(null)}
+                className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold"
+              >
+                Close Player
               </button>
             </div>
           </div>

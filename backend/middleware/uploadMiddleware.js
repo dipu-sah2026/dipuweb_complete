@@ -35,5 +35,23 @@ const upload = multer({
   fileFilter,
 });
 
+const videoFileFilter = (req, file, cb) => {
+  const allowedTypes = /mp4|mov|avi|mkv|webm|m4v|jpeg|jpg|png|webp/;
+  const ext = path.extname(file.originalname).toLowerCase();
+  const mime = file.mimetype;
+  if (allowedTypes.test(ext) || allowedTypes.test(mime) || mime.startsWith('video/')) {
+    return cb(null, true);
+  }
+  cb(new Error('Only video files (mp4, mov, mkv, webm, avi) or images are allowed'));
+};
+
+const videoUpload = multer({
+  storage,
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB limit for video delivery
+  fileFilter: videoFileFilter,
+});
+
+upload.videoUpload = videoUpload;
+
 module.exports = upload;
 

@@ -12,6 +12,9 @@ import {
   Lock, 
   ShieldCheck,
   Eye,
+  EyeOff,
+  Cloud,
+  Key,
   ExternalLink
 } from 'lucide-react';
 import api, { DEFAULT_SETTINGS } from '../../services/api';
@@ -20,6 +23,7 @@ const AdminSettings = () => {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [showCloudinarySecret, setShowCloudinarySecret] = useState(false);
 
   // Password change state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -233,6 +237,107 @@ const AdminSettings = () => {
                 className="w-full bg-slate-900 border border-brand-border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand-yellow"
               />
             </div>
+          </div>
+        </div>
+
+        {/* 2.5 Cloudinary API Configuration */}
+        <div className="space-y-4 pb-6 border-b border-brand-border">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-black text-white flex items-center gap-2">
+              <Cloud className="w-5 h-5 text-cyan-400" />
+              <span>Cloudinary API (Video Hosting & Direct Delivery)</span>
+            </h3>
+            {settings.cloudinary?.cloudName && settings.cloudinary?.apiKey && settings.cloudinary?.apiSecret ? (
+              <span className="text-xs font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-500/40 px-3 py-1 rounded-full flex items-center gap-1">
+                <CheckCircle className="w-3.5 h-3.5" />
+                API Configured
+              </span>
+            ) : (
+              <span className="text-xs font-bold text-amber-400 bg-amber-950/80 border border-amber-500/40 px-3 py-1 rounded-full">
+                ⚠️ Not Configured
+              </span>
+            )}
+          </div>
+          
+          <p className="text-xs text-slate-400">
+            Jab aap Admin panel se client ko direct video upload karke deliver karenge, toh video aapke Cloudinary account me upload hogi aur uska direct streaming link client ko mil jayega. (Free tier: 25 GB storage).
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                Cloud Name *
+              </label>
+              <input
+                type="text"
+                value={settings.cloudinary?.cloudName || ''}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    cloudinary: { ...settings.cloudinary, cloudName: e.target.value },
+                  })
+                }
+                placeholder="e.g. dpxvideo"
+                className="w-full bg-slate-900 border border-brand-border rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-yellow font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                API Key *
+              </label>
+              <input
+                type="text"
+                value={settings.cloudinary?.apiKey || ''}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    cloudinary: { ...settings.cloudinary, apiKey: e.target.value },
+                  })
+                }
+                placeholder="e.g. 849281938192831"
+                className="w-full bg-slate-900 border border-brand-border rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-yellow font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center justify-between">
+                <span>API Secret *</span>
+                <button
+                  type="button"
+                  onClick={() => setShowCloudinarySecret(!showCloudinarySecret)}
+                  className="text-[10px] text-cyan-400 hover:underline flex items-center gap-1"
+                >
+                  {showCloudinarySecret ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                  <span>{showCloudinarySecret ? 'Hide' : 'Show'}</span>
+                </button>
+              </label>
+              <input
+                type={showCloudinarySecret ? 'text' : 'password'}
+                value={settings.cloudinary?.apiSecret || ''}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    cloudinary: { ...settings.cloudinary, apiSecret: e.target.value },
+                  })
+                }
+                placeholder="••••••••••••••••••••"
+                className="w-full bg-slate-900 border border-brand-border rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-yellow font-mono"
+              />
+            </div>
+          </div>
+
+          <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800 text-[11px] text-slate-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <span>🔑 Free API credentials kahan milenge? <strong>cloudinary.com</strong> pe free sign-up karke Dashboard se copy karein.</span>
+            <a
+              href="https://cloudinary.com/users/register_free"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-cyan-400 hover:underline flex items-center gap-1 font-bold shrink-0"
+            >
+              <span>Get Free API Key</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
           </div>
         </div>
 

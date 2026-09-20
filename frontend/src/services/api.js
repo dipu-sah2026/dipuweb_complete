@@ -228,5 +228,19 @@ export const DEFAULT_SETTINGS = {
   bannerNotice: '⚡ Special Launch Offer: Professional AI Video & Shorts Editing Starting @ Just ₹100! 24-Hour Express Delivery Guaranteed.',
   enableNotice: true,
   tagline: 'Your Idea, My Editing & AI Magic',
+  cloudinary: {
+    cloudName: '',
+    apiKey: '',
+    apiSecret: '',
+  },
+};
+
+// Helper to convert relative server paths (e.g. /uploads/...) to full URLs
+export const getAssetUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  const backendBase = API_BASE_URL.replace(/\/api\/?$/, '');
+  const clean = path.startsWith('/') ? path : `/${path}`;
+  return `${backendBase}${clean}`;
 };
 

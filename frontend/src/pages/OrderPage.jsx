@@ -19,7 +19,9 @@ import {
   AlertCircle,
   Percent,
   CreditCard,
-  X
+  X,
+  Clipboard,
+  HelpCircle
 } from 'lucide-react';
 import api, { DEFAULT_SERVICES, DEFAULT_SETTINGS } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -237,10 +239,73 @@ const OrderPage = () => {
   const scriptWordCount = scriptNotes.trim() ? scriptNotes.trim().split(/\s+/).length : 0;
   const estimatedSeconds = Math.round((scriptWordCount / 140) * 60);
 
+  const [clipboardNotice, setClipboardNotice] = useState('');
+  const [paymentAppOpened, setPaymentAppOpened] = useState(false);
+  const [showUtrGuideModal, setShowUtrGuideModal] = useState(false);
+
   const handleCopyUpi = () => {
     navigator.clipboard.writeText(activeUpiId);
     setCopiedUpi(true);
-    setTimeout(() => setCopiedUpi(false), 2000);
+    setClipboardNotice(`✅ UPI ID "${activeUpiId}" copied to clipboard!`);
+    setTimeout(() => {
+      setCopiedUpi(false);
+      setClipboardNotice('');
+    }, 2500);
+  };
+
+  const getAppPaymentUri = (scheme) => {
+    const base = `pa=${activeUpiId}&pn=${encodeURIComponent(activeUpiName)}&am=${finalPrice}&cu=INR&tn=${encodeURIComponent('DipuEditX Video Order')}`;
+    if (scheme === 'phonepe') return `phonepe://pay?${base}`;
+    if (scheme === 'gpay') return `tez://upi/pay?${base}`;
+    if (scheme === 'paytm') return `paytmmp://pay?${base}`;
+    return `upi://pay?${base}`;
+  };
+
+  const handleMobilePay = async (scheme, appName) => {
+    // 1. Auto-copy UPI ID to clipboard
+    try {
+      await navigator.clipboard.writeText(activeUpiId);
+      setCopiedUpi(true);
+      setTimeout(() => setCopiedUpi(false), 2500);
+    } catch (e) {
+      console.log('Clipboard copy failed:', e);
+    }
+
+    setPaymentAppOpened(true);
+    setClipboardNotice(`✅ UPI ID "${activeUpiId}" copied! Opening ${appName}... Payment complete karke 12-digit UTR copy karein.`);
+
+    // 2. Open payment app intent
+    const uri = getAppPaymentUri(scheme);
+    window.location.href = uri;
+  };
+
+  const handlePasteUtrFromClipboard = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text || !text.trim()) {
+        setClipboardNotice('⚠️ Clipboard is empty. Kripya apne UPI payment app se 12-digit UTR copy karein.');
+        setTimeout(() => setClipboardNotice(''), 4000);
+        return;
+      }
+      const cleanText = text.trim();
+      // Look for a 12-digit numeric sequence anywhere in the copied text
+      const match = cleanText.match(/\b\d{12}\b/);
+      const candidate = match ? match[0] : cleanText.replace(/\D/g, '').slice(0, 12);
+
+      if (candidate && candidate.length === 12) {
+        setUtrNumber(candidate);
+        const check = validateUtrFormat(candidate);
+        setUtrError(check.valid ? '' : check.message);
+        setClipboardNotice('✅ 12-Digit UTR successfully pasted from clipboard!');
+        setTimeout(() => setClipboardNotice(''), 4000);
+      } else {
+        setClipboardNotice(`⚠️ Clipboard me 12 digits ka UTR nahi mila ("${cleanText.slice(0, 15)}..."). PhonePe/GPay se UTR copy karein.`);
+        setTimeout(() => setClipboardNotice(''), 5000);
+      }
+    } catch (err) {
+      setClipboardNotice('⚠️ Clipboard permission needed. Aap manually 12-digit UTR type kar sakte hain.');
+      setTimeout(() => setClipboardNotice(''), 4000);
+    }
   };
 
   const handleToggleAddon = (addonId) => {
@@ -324,7 +389,7 @@ const OrderPage = () => {
 
       // Client-side FormSubmit redundancy trigger
       try {
-        const formSubmitRecipient = settings?.formSubmitEmail || 'dipusah7481@gmail.com';
+        const formSubmitRecipient = settings?.formSubmitEmail || 'dipusah51858@gmail.com';
         fetch(`https://formsubmit.co/ajax/${formSubmitRecipient}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
@@ -801,13 +866,77 @@ const OrderPage = () => {
                     </button>
                   </div>
 
-                  {/* Mobile Direct Intent */}
-                  <a
-                    href={upiPaymentUri}
-                    className="block sm:hidden w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl text-center mb-4"
-                  >
-                    Click to Open UPI App (Mobile)
-                  </a>
+                  {/* Mobile Direct Intent / App Selection */}
+                  <div className="block sm:hidden space-y-2 mb-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-300">
+                        Tap to Pay on Mobile App:
+                      </span>
+                      <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+                        <Copy className="w-2.5 h-2.5" /> Auto-copies UPI ID
+                      </span>
+                    </div>
+
+                    {clipboardNotice && (
+                      <div className="p-2.5 rounded-xl bg-yellow-500/15 border border-brand-yellow/40 text-brand-yellow text-xs font-bold flex items-center gap-2 animate-in fade-in">
+                        <Sparkles className="w-4 h-4 shrink-0 text-brand-yellow" />
+                        <span className="flex-1">{clipboardNotice}</span>
+                        <button type="button" onClick={() => setClipboardNotice('')} className="text-brand-yellow hover:text-white">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleMobilePay('phonepe', 'PhonePe')}
+                        className="py-2.5 px-3 bg-[#5f259f] hover:bg-[#4d1d82] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow transition-all active:scale-95"
+                      >
+                        <span>🟣 PhonePe</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleMobilePay('gpay', 'Google Pay')}
+                        className="py-2.5 px-3 bg-[#1a73e8] hover:bg-[#1557b0] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow transition-all active:scale-95"
+                      >
+                        <span>🟢 Google Pay</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleMobilePay('paytm', 'Paytm')}
+                        className="py-2.5 px-3 bg-[#00b9f1] hover:bg-[#0092bf] text-black font-black text-xs rounded-xl flex items-center justify-center gap-1.5 shadow transition-all active:scale-95"
+                      >
+                        <span>🔵 Paytm</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleMobilePay('any', 'UPI App')}
+                        className="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-brand-yellow font-bold text-xs rounded-xl border border-brand-yellow/30 flex items-center justify-center gap-1.5 shadow transition-all active:scale-95"
+                      >
+                        <span>🟡 Any UPI App</span>
+                      </button>
+                    </div>
+
+                    {paymentAppOpened && (
+                      <div className="p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-[11px] text-emerald-300 flex items-center justify-between">
+                        <span>Payment ho gaya? Niche Step 4 me UTR paste karein 👇</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const el = document.getElementById('step-4-utr');
+                            if (el) el.scrollIntoView({ behavior: 'smooth' });
+                          }}
+                          className="underline font-bold text-white ml-2 shrink-0"
+                        >
+                          Go to Step 4
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Discount Coupon Code Box (Clearly Labeled Optional) */}
                   <div className="mb-4 bg-slate-900/60 p-3.5 rounded-2xl border border-dashed border-slate-700">
@@ -896,7 +1025,7 @@ const OrderPage = () => {
                   </div>
 
                   {/* Dedicated Step 4: Mandatory UTR Input Section */}
-                  <div className="bg-slate-950 p-4 sm:p-5 rounded-2xl border-2 border-brand-yellow shadow-xl space-y-3">
+                  <div id="step-4-utr" className="bg-slate-950 p-4 sm:p-5 rounded-2xl border-2 border-brand-yellow shadow-xl space-y-3">
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="inline-flex items-center gap-1.5 text-xs font-black text-brand-yellow uppercase tracking-wider bg-yellow-500/15 px-2.5 py-1 rounded-md border border-yellow-500/30">
@@ -910,9 +1039,31 @@ const OrderPage = () => {
                         </span>
                       </div>
 
-                      <p className="text-[11px] text-slate-300 mb-2">
-                        UPI App (PhonePe / GPay / Paytm) me payment complete karne ke baad <strong>12-digit UTR Number</strong> yahan dalein:
-                      </p>
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <p className="text-[11px] text-slate-300">
+                          Payment complete karne ke baad <strong>12-digit UTR Number</strong> dalein:
+                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={handlePasteUtrFromClipboard}
+                            className="px-2.5 py-1 rounded-lg bg-yellow-500/15 hover:bg-yellow-500/25 border border-brand-yellow/40 text-brand-yellow text-[11px] font-bold flex items-center gap-1 transition-all"
+                            title="Paste 12-digit UTR directly from clipboard"
+                          >
+                            <Clipboard className="w-3 h-3" />
+                            <span>📋 Auto-Paste UTR</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowUtrGuideModal(true)}
+                            className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 text-[11px] font-bold flex items-center gap-1 transition-all"
+                            title="Where to find UTR in PhonePe/GPay?"
+                          >
+                            <HelpCircle className="w-3 h-3" />
+                            <span>Where to find?</span>
+                          </button>
+                        </div>
+                      </div>
 
                       <div className="relative">
                         <input
@@ -996,6 +1147,87 @@ const OrderPage = () => {
               </div>
 
             </form>
+          </div>
+        )}
+
+        {/* Where to find UTR Guide Modal */}
+        {showUtrGuideModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
+            <div className="relative w-full max-w-lg bg-slate-900 border border-brand-border rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5">
+              <button
+                type="button"
+                onClick={() => setShowUtrGuideModal(false)}
+                className="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              <div>
+                <h3 className="text-lg font-black text-white flex items-center gap-2">
+                  <HelpCircle className="w-5 h-5 text-brand-yellow" />
+                  <span>12-Digit UTR / Ref Number Kahan Milega?</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  Payment hone ke baad apne UPI app ki transaction receipt me se 12 digits ka number dekhein:
+                </p>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                {/* PhonePe */}
+                <div className="p-3.5 rounded-2xl bg-slate-950 border border-purple-500/30 space-y-1">
+                  <div className="flex items-center justify-between font-bold text-purple-300">
+                    <span>🟣 PhonePe</span>
+                    <span className="font-mono bg-purple-950 px-2 py-0.5 rounded text-[11px]">UTR / Bank Ref ID</span>
+                  </div>
+                  <p className="text-slate-300">
+                    PhonePe open karein ➔ <strong>History</strong> me Dipu Sah transaction pe tap karein ➔ <strong>"UTR"</strong> ke aage 12 digits ka number copy icon dabakar copy karein.
+                  </p>
+                </div>
+
+                {/* Google Pay */}
+                <div className="p-3.5 rounded-2xl bg-slate-950 border border-blue-500/30 space-y-1">
+                  <div className="flex items-center justify-between font-bold text-blue-300">
+                    <span>🟢 Google Pay (GPay)</span>
+                    <span className="font-mono bg-blue-950 px-2 py-0.5 rounded text-[11px]">UPI Transaction ID</span>
+                  </div>
+                  <p className="text-slate-300">
+                    GPay open karein ➔ <strong>See transaction history</strong> ➔ Dipu Sah payment pe click karein ➔ Niche scroll karein ➔ <strong>"UPI transaction ID"</strong> (12 digits) copy karein.
+                  </p>
+                </div>
+
+                {/* Paytm */}
+                <div className="p-3.5 rounded-2xl bg-slate-950 border border-cyan-500/30 space-y-1">
+                  <div className="flex items-center justify-between font-bold text-cyan-300">
+                    <span>🔵 Paytm</span>
+                    <span className="font-mono bg-cyan-950 px-2 py-0.5 rounded text-[11px]">UPI Ref No.</span>
+                  </div>
+                  <p className="text-slate-300">
+                    Paytm open karein ➔ <strong>Balance & History</strong> ➔ Payment details me <strong>"UPI Ref No"</strong> (12 digits) copy karein.
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-2 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowUtrGuideModal(false);
+                    handlePasteUtrFromClipboard();
+                  }}
+                  className="flex-1 py-3 bg-brand-yellow hover:bg-brand-yellowHover text-black font-black text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-lg transition-all"
+                >
+                  <Clipboard className="w-4 h-4" />
+                  <span>Maine Copy Kar Liya - Auto-Paste Now</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowUtrGuideModal(false)}
+                  className="px-4 py-3 bg-slate-800 text-slate-300 text-xs font-bold rounded-xl"
+                >
+                  Got it
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

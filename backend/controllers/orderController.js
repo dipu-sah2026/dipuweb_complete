@@ -1,6 +1,9 @@
 const Order = require('../models/Order');
 const Setting = require('../models/Setting');
 const Coupon = require('../models/Coupon');
+const fs = require('fs');
+const path = require('path');
+const { cloudinary, getCloudinaryConfig } = require('../config/cloudinary');
 
 // Helper to trigger FormSubmit.co email notification to Dipu
 const sendFormSubmitNotification = async (orderData, targetEmail) => {
@@ -347,6 +350,96 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
+// @desc    Deliver finished order (Video via Cloudinary OR External Link)
+// @route   POST /api/orders/:id/deliver
+// @access  Private/Admin
+const deliverOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { deliveryType = 'link', deliveryLink, adminNotes } = req.body;
+
+    const order = await Order.findById(id);
+    if (!order) {
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    if (deliveryType === 'video_upload') {
+      if (!req.file) {
+        return res.status(400).json({ success: false, message: 'Please select and upload a video file for Cloudinary delivery.' });
+      }
+
+      const cloudConfig = await getCloudinaryConfig();
+      if (!cloudConfig.configured) {
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+        return res.status(400).json({
+          success: false,
+          message: cloudConfig.error || 'Cloudinary credentials are not configured in Admin Settings. Please configure them in Settings or deliver using External Link.',
+        });
+      }
+
+      try {
+        console.log(`[Cloudinary Delivery] Uploading video for Order #${order.orderId} (${req.file.size} bytes)...`);
+        const uploadResult = await cloudinary.uploader.upload(req.file.path, {
+          resource_type: 'video',
+          folder: 'dipueditx_deliveries',
+          public_id: `delivery_${order.orderId}_${Date.now()}`,
+          overwrite: true,
+        });
+
+        // Clean up temporary local upload file
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+
+        order.deliveryLink = uploadResult.secure_url;
+        order.deliveryType = 'video_upload';
+      } catch (uploadErr) {
+        if (fs.existsSync(req.file.path)) {
+          try { fs.unlinkSync(req.file.path); } catch (e) {}
+        }
+        console.error('[Cloudinary Upload Error]:', uploadErr);
+        return res.status(500).json({
+          success: false,
+          message: `Cloudinary upload failed: ${uploadErr.message || 'Unknown upload error'}`,
+        });
+      }
+    } else {
+      // External Link (Google Drive, Dropbox, Mega, etc.)
+      if (!deliveryLink || !deliveryLink.trim()) {
+        return res.status(400).json({ success: false, message: 'Delivery Link (e.g. Google Drive, Mega) is required.' });
+      }
+      order.deliveryLink = deliveryLink.trim();
+      order.deliveryType = 'link';
+    }
+
+    order.status = 'Completed';
+    order.deliveredAt = new Date();
+    if (adminNotes !== undefined) {
+      order.adminNotes = adminNotes;
+    }
+
+    await order.save();
+
+    console.log(`[Order Delivered]: Order #${order.orderId} delivered successfully via ${order.deliveryType}. URL: ${order.deliveryLink}`);
+
+    res.json({
+      success: true,
+      message: `Order #${order.orderId} delivered successfully to client!`,
+      data: order,
+    });
+  } catch (error) {
+    if (req.file && fs.existsSync(req.file.path)) {
+      try { fs.unlinkSync(req.file.path); } catch (e) {}
+    }
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // @desc    Submit revision request by client
 // @route   POST /api/orders/:id/revision
 // @access  Private (Client)
@@ -480,6 +573,7 @@ module.exports = {
   getMyOrders,
   trackOrder,
   updateOrderStatus,
+  deliverOrder,
   requestRevision,
   exportOrdersCsv,
   deleteOrder,

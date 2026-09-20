@@ -98,6 +98,14 @@ const orderSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    deliveryType: {
+      type: String,
+      enum: ['link', 'video_upload'],
+      default: 'link',
+    },
+    deliveredAt: {
+      type: Date,
+    },
     revisionNotes: {
       type: String,
       default: '',

@@ -16,9 +16,15 @@ import {
   Printer,
   X,
   MessageSquare,
-  AlertCircle
+  AlertCircle,
+  Cloud,
+  UploadCloud,
+  Video,
+  Loader2,
+  Eye,
+  Play
 } from 'lucide-react';
-import api from '../../services/api';
+import api, { getAssetUrl } from '../../services/api';
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -28,6 +34,73 @@ const AdminOrders = () => {
   const [updatingId, setUpdatingId] = useState(null);
   const [deliveryLinks, setDeliveryLinks] = useState({});
   const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState(null);
+  const [selectedScreenshotOrder, setSelectedScreenshotOrder] = useState(null);
+
+  // Delivery Modal State
+  const [selectedDeliveryOrder, setSelectedDeliveryOrder] = useState(null);
+  const [deliveryType, setDeliveryType] = useState('link'); // 'link' or 'video_upload'
+  const [deliveryUrlInput, setDeliveryUrlInput] = useState('');
+  const [deliveryVideoFile, setDeliveryVideoFile] = useState(null);
+  const [deliveryAdminNotes, setDeliveryAdminNotes] = useState('');
+  const [delivering, setDelivering] = useState(false);
+  const [deliveryError, setDeliveryError] = useState('');
+
+  const openDeliveryModal = (ord) => {
+    setSelectedDeliveryOrder(ord);
+    setDeliveryType(ord.deliveryType || 'link');
+    setDeliveryUrlInput(ord.deliveryLink || '');
+    setDeliveryVideoFile(null);
+    setDeliveryAdminNotes(ord.adminNotes || '');
+    setDeliveryError('');
+  };
+
+  const handleExecuteDelivery = async (e) => {
+    e.preventDefault();
+    if (!selectedDeliveryOrder) return;
+    setDeliveryError('');
+
+    if (deliveryType === 'link') {
+      if (!deliveryUrlInput || !deliveryUrlInput.trim()) {
+        setDeliveryError('Delivery URL (Google Drive / Mega link) is required!');
+        return;
+      }
+    } else {
+      if (!deliveryVideoFile) {
+        setDeliveryError('Please select a video file to upload to Cloudinary!');
+        return;
+      }
+    }
+
+    setDelivering(true);
+    try {
+      const formData = new FormData();
+      formData.append('deliveryType', deliveryType);
+      if (deliveryType === 'link') {
+        formData.append('deliveryLink', deliveryUrlInput.trim());
+      } else {
+        formData.append('videoFile', deliveryVideoFile);
+      }
+      if (deliveryAdminNotes) {
+        formData.append('adminNotes', deliveryAdminNotes);
+      }
+
+      const res = await api.post(`/orders/${selectedDeliveryOrder._id}/deliver`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (res.data?.success) {
+        alert(`Order #${selectedDeliveryOrder.orderId} delivered successfully!`);
+        setSelectedDeliveryOrder(null);
+        fetchOrders();
+      }
+    } catch (err) {
+      setDeliveryError(err.response?.data?.message || 'Failed to deliver order. Please check Cloudinary settings.');
+    } finally {
+      setDelivering(false);
+    }
+  };
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -235,20 +308,42 @@ const AdminOrders = () => {
                     )}
                   </div>
 
-                  <div className="bg-slate-900/80 p-3 rounded-xl space-y-1 border border-brand-yellow/20">
+                  <div className="bg-slate-900/80 p-3 rounded-xl space-y-1.5 border border-brand-yellow/20">
                     <span className="text-brand-yellow uppercase tracking-wider font-bold">Payment UTR Ref</span>
                     <p className="font-mono font-bold text-white text-sm">{ord.utrNumber}</p>
                     {ord.paymentScreenshot ? (
-                      <a
-                        href={ord.paymentScreenshot}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[10px] text-cyan-400 underline block"
-                      >
-                        View Screenshot Proof
-                      </a>
+                      <div className="flex items-center gap-2 pt-1">
+                        <img
+                          src={getAssetUrl(ord.paymentScreenshot)}
+                          alt="Screenshot Proof"
+                          onClick={() => setSelectedScreenshotOrder(ord)}
+                          className="w-10 h-10 object-cover rounded-lg border border-slate-700 hover:border-brand-yellow cursor-pointer shadow transition-all hover:scale-105 shrink-0"
+                          title="Click to view full screenshot"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                        <div className="overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedScreenshotOrder(ord)}
+                            className="text-[11px] text-cyan-400 font-bold hover:underline block text-left"
+                          >
+                            🔍 View Proof
+                          </button>
+                          <a
+                            href={getAssetUrl(ord.paymentScreenshot)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] text-slate-400 hover:text-white flex items-center gap-0.5"
+                          >
+                            <span>Open URL</span>
+                            <ExternalLink className="w-2.5 h-2.5" />
+                          </a>
+                        </div>
+                      </div>
                     ) : (
-                      <span className="text-[10px] text-emerald-400 block font-semibold">Verify in UPI app</span>
+                      <span className="text-[10px] text-emerald-400 block font-semibold">Verify via UPI UTR</span>
                     )}
                   </div>
 
@@ -303,7 +398,7 @@ const AdminOrders = () => {
                   </div>
                 )}
 
-                {/* Bottom Row: Status Dropdown, Delivery Link Input, Action Buttons */}
+                {/* Bottom Row: Status Dropdown, Delivery Link & Cloudinary Upload, Action Buttons */}
                 <div className="pt-2 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
                   
                   {/* Status Dropdown */}
@@ -331,25 +426,41 @@ const AdminOrders = () => {
                     </select>
                   </div>
 
-                  {/* Delivery URL input */}
-                  <div className="flex-1 max-w-md flex items-center gap-2">
-                    <input
-                      type="url"
-                      placeholder="Paste final Google Drive / download link..."
-                      value={deliveryLinks[ord._id] || ''}
-                      onChange={(e) =>
-                        setDeliveryLinks({ ...deliveryLinks, [ord._id]: e.target.value })
-                      }
-                      className="w-full bg-slate-900 border border-brand-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
-                    />
-                    <button
-                      onClick={() => handleSaveDeliveryLink(ord._id)}
-                      disabled={updatingId === ord._id}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-2 rounded-xl text-xs flex items-center gap-1 shrink-0"
-                    >
-                      <Save className="w-3.5 h-3.5" />
-                      <span>{updatingId === ord._id ? 'Saving...' : 'Deliver'}</span>
-                    </button>
+                  {/* Delivery Action & Status */}
+                  <div className="flex-1 flex flex-wrap items-center gap-2">
+                    {ord.deliveryLink ? (
+                      <div className="flex items-center gap-2 bg-emerald-950/40 border border-emerald-500/40 px-3 py-1.5 rounded-xl">
+                        <span className="text-xs text-emerald-400 font-bold flex items-center gap-1">
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          Delivered ({ord.deliveryType === 'video_upload' ? 'Cloudinary Video' : 'Link'})
+                        </span>
+                        <a
+                          href={ord.deliveryLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-cyan-400 underline hover:text-cyan-300 font-bold flex items-center gap-1"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          <span>View Delivery</span>
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => openDeliveryModal(ord)}
+                          className="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded ml-1"
+                        >
+                          Update / Re-deliver
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => openDeliveryModal(ord)}
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all transform hover:-translate-y-0.5"
+                      >
+                        <UploadCloud className="w-4 h-4" />
+                        <span>Deliver Video (Link or Cloudinary Upload)</span>
+                      </button>
+                    )}
                   </div>
 
                   {/* CRM Quick Actions (WhatsApp templates, Mail, Delete) */}
@@ -449,6 +560,223 @@ const AdminOrders = () => {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Screenshot Modal */}
+      {selectedScreenshotOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
+          <div className="relative w-full max-w-2xl bg-slate-900 border border-brand-border rounded-3xl p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-brand-border shrink-0">
+              <div>
+                <h3 className="text-base font-black text-white flex items-center gap-2">
+                  <span>Payment Screenshot Proof</span>
+                  <span className="text-brand-yellow font-mono text-xs">#{selectedScreenshotOrder.orderId}</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Client: <strong className="text-white">{selectedScreenshotOrder.clientName}</strong> • UTR: <strong className="text-brand-yellow font-mono">{selectedScreenshotOrder.utrNumber}</strong> • Amount: <strong className="text-emerald-400 font-bold">₹{selectedScreenshotOrder.amount}</strong>
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedScreenshotOrder(null)}
+                className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-auto rounded-2xl bg-black flex items-center justify-center p-2 border border-slate-800">
+              <img
+                src={getAssetUrl(selectedScreenshotOrder.paymentScreenshot)}
+                alt={`Proof #${selectedScreenshotOrder.orderId}`}
+                className="max-h-[60vh] w-auto object-contain rounded-xl"
+              />
+            </div>
+
+            <div className="flex items-center justify-between pt-2 shrink-0">
+              <a
+                href={getAssetUrl(selectedScreenshotOrder.paymentScreenshot)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-cyan-400 hover:underline flex items-center gap-1 font-bold"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Open original image in full tab</span>
+              </a>
+              <button
+                onClick={() => setSelectedScreenshotOrder(null)}
+                className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Order Final Delivery Modal (Cloudinary Video Upload OR Drive Link) */}
+      {selectedDeliveryOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
+          <div className="relative w-full max-w-xl bg-slate-900 border border-brand-border rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5">
+            <button
+              onClick={() => !delivering && setSelectedDeliveryOrder(null)}
+              disabled={delivering}
+              className="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center disabled:opacity-50"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
+                  <UploadCloud className="w-5 h-5" />
+                </span>
+                <div>
+                  <h3 className="text-lg font-black text-white">
+                    Deliver Final Video #{selectedDeliveryOrder.orderId}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Client: <strong className="text-white">{selectedDeliveryOrder.clientName}</strong> • {selectedDeliveryOrder.serviceTitle}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {deliveryError && (
+              <div className="p-3 bg-red-950/60 border border-red-800 text-red-300 text-xs font-bold rounded-xl flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{deliveryError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleExecuteDelivery} className="space-y-4">
+              
+              {/* Delivery Type Selector */}
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-2">
+                  Choose Delivery Method *
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryType('link')}
+                    className={`p-3 rounded-2xl border text-left flex items-start gap-2.5 transition-all ${
+                      deliveryType === 'link'
+                        ? 'bg-emerald-950/50 border-emerald-500 text-white'
+                        : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <ExternalLink className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-bold">External Cloud Link</p>
+                      <span className="text-[10px] text-slate-500 block">Google Drive, Mega, Dropbox</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryType('video_upload')}
+                    className={`p-3 rounded-2xl border text-left flex items-start gap-2.5 transition-all ${
+                      deliveryType === 'video_upload'
+                        ? 'bg-cyan-950/50 border-cyan-500 text-white'
+                        : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <Cloud className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-bold">Cloudinary Video Upload</p>
+                      <span className="text-[10px] text-slate-500 block">Direct video hosting up to 100MB</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Conditional Input based on Delivery Type */}
+              {deliveryType === 'link' ? (
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Google Drive / Download URL (Required) *
+                  </label>
+                  <input
+                    type="url"
+                    required
+                    placeholder="https://drive.google.com/file/d/... or https://mega.nz/..."
+                    value={deliveryUrlInput}
+                    onChange={(e) => setDeliveryUrlInput(e.target.value)}
+                    className="w-full bg-slate-950 border border-brand-border rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"
+                  />
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Paste the shareable download link with 'Anyone with the link can view' permission enabled.
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Upload Finished Video File (Required) *
+                  </label>
+                  <input
+                    type="file"
+                    required={!selectedDeliveryOrder.deliveryLink}
+                    accept="video/*"
+                    onChange={(e) => setDeliveryVideoFile(e.target.files[0] || null)}
+                    className="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-cyan-950 file:text-cyan-300 hover:file:bg-cyan-900 border border-slate-800 bg-slate-950 p-2 rounded-xl"
+                  />
+                  {deliveryVideoFile && (
+                    <p className="text-[11px] text-cyan-400 mt-1 font-mono">
+                      Selected: {deliveryVideoFile.name} ({(deliveryVideoFile.size / (1024 * 1024)).toFixed(2)} MB)
+                    </p>
+                  )}
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Allowed formats: MP4, MOV, MKV, WebM. File will be uploaded to your Cloudinary storage and delivered instantly.
+                  </p>
+                </div>
+              )}
+
+              {/* Admin Delivery Note */}
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Message / Revision Note for Client (Optional)
+                </label>
+                <textarea
+                  rows={2}
+                  value={deliveryAdminNotes}
+                  onChange={(e) => setDeliveryAdminNotes(e.target.value)}
+                  placeholder="e.g. Here is your final 4K 60fps reel! Revisions are free if needed within 48h."
+                  className="w-full bg-slate-950 border border-brand-border rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="pt-2 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  disabled={delivering}
+                  onClick={() => setSelectedDeliveryOrder(null)}
+                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={delivering}
+                  className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black flex items-center gap-2 shadow-lg shadow-emerald-600/30 transition-all disabled:opacity-75"
+                >
+                  {delivering ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>{deliveryType === 'video_upload' ? 'Uploading to Cloudinary...' : 'Delivering...'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Complete & Deliver Video</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+            </form>
           </div>
         </div>
       )}

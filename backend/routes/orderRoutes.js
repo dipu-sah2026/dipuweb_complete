@@ -6,6 +6,7 @@ const {
   getMyOrders,
   trackOrder,
   updateOrderStatus,
+  deliverOrder,
   requestRevision,
   exportOrdersCsv,
   deleteOrder,
@@ -27,6 +28,7 @@ router.get('/export-csv', protect, adminOnly, exportOrdersCsv);
 router.get('/metrics', protect, adminOnly, getMetrics);
 router.get('/', protect, adminOnly, getOrders);
 router.patch('/:id', protect, adminOnly, updateOrderStatus);
+router.post('/:id/deliver', protect, adminOnly, upload.videoUpload.single('videoFile'), deliverOrder);
 router.delete('/:id', protect, adminOnly, deleteOrder);
 
 module.exports = router;

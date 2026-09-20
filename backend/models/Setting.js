@@ -84,6 +84,20 @@ const settingSchema = new mongoose.Schema(
       type: Number,
       default: 48,
     },
+    cloudinary: {
+      cloudName: {
+        type: String,
+        default: '',
+      },
+      apiKey: {
+        type: String,
+        default: '',
+      },
+      apiSecret: {
+        type: String,
+        default: '',
+      },
+    },
   },
   { timestamps: true }
 );
