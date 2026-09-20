@@ -92,7 +92,7 @@ const AdminLogin = () => {
             <ArrowLeft className="w-3.5 h-3.5" />
             Back to Website
           </Link>
-          <span className="text-[10px] text-slate-500">Seed: admin@dipueditx.in</span>
+          
         </div>
 
       </div>
