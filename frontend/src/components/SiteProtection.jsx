@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 
 /**
  * SiteProtection Component
- * Blocks right-click context menu, developer tool keyboard shortcuts (F12, Ctrl+U, Ctrl+Shift+I, etc.),
- * and prevents dragging media assets to protect website content.
+ * Blocks right-click context menu, developer tool keyboard shortcuts,
+ * and completely disables Drag & Drop site-wide for all elements/text/images.
  */
 const SiteProtection = () => {
   useEffect(() => {
@@ -15,7 +15,6 @@ const SiteProtection = () => {
 
     // 2. Block Inspect & Developer Tools Keyboard Shortcuts
     const handleKeyDown = (e) => {
-      // Allow F12 / Shortcuts inside input fields if needed, or enforce site-wide
       // F12 key
       if (e.keyCode === 123 || e.key === 'F12') {
         e.preventDefault();
@@ -45,22 +44,45 @@ const SiteProtection = () => {
       }
     };
 
-    // 3. Block Dragging Images / Videos
+    // 3. Block Dragging Completely (All Elements, Text, Links, Media)
     const handleDragStart = (e) => {
-      if (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO') {
-        e.preventDefault();
-        return false;
+      // Allow file inputs to receive native file drag if targeted
+      if (e.target && e.target.tagName === 'INPUT' && e.target.type === 'file') {
+        return true;
       }
+      e.preventDefault();
+      return false;
+    };
+
+    // 4. Block Drop Event Globally (except file inputs)
+    const handleDrop = (e) => {
+      if (e.target && e.target.tagName === 'INPUT' && e.target.type === 'file') {
+        return true;
+      }
+      e.preventDefault();
+      return false;
+    };
+
+    const handleDragOver = (e) => {
+      if (e.target && e.target.tagName === 'INPUT' && e.target.type === 'file') {
+        return true;
+      }
+      e.preventDefault();
+      return false;
     };
 
     window.addEventListener('contextmenu', handleContextMenu);
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('dragstart', handleDragStart);
+    window.addEventListener('dragover', handleDragOver);
+    window.addEventListener('drop', handleDrop);
 
     return () => {
       window.removeEventListener('contextmenu', handleContextMenu);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('dragstart', handleDragStart);
+      window.removeEventListener('dragover', handleDragOver);
+      window.removeEventListener('drop', handleDrop);
     };
   }, []);
 

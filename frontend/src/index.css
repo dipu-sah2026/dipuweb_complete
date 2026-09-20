@@ -14,14 +14,21 @@
     font-family: 'Outfit', sans-serif;
   }
 
-  /* Prevent image & video selection/dragging */
+  /* Prevent image, video, and element dragging completely */
+  *, img, video, a {
+    -webkit-user-drag: none !important;
+    -khtml-user-drag: none !important;
+    -moz-user-drag: none !important;
+    -o-user-drag: none !important;
+    user-drag: none !important;
+  }
+
   img, video {
     -webkit-user-select: none;
     -khtml-user-select: none;
     -moz-user-select: none;
     -o-user-select: none;
     user-select: none;
-    -webkit-user-drag: none;
     pointer-events: auto;
   }
 }
