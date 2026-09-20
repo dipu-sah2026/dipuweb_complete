@@ -7,3 +7,4 @@ router.get('/', protect, adminOnly, getAllUsers);
 router.put('/profile', protect, updateProfile);
 
 module.exports = router;
+

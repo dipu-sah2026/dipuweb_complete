@@ -75,3 +75,4 @@ module.exports = {
   getAllUsers,
   updateProfile,
 };
+

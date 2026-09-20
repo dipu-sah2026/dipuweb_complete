@@ -29,3 +29,4 @@ const faqSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model('Faq', faqSchema);
+

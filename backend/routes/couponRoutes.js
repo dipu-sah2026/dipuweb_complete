@@ -14,3 +14,4 @@ router.post('/', protect, adminOnly, createCoupon);
 router.delete('/:id', protect, adminOnly, deleteCoupon);
 
 module.exports = router;
+

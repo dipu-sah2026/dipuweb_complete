@@ -16,3 +16,4 @@ router.put('/:id', protect, adminOnly, updateFaq);
 router.delete('/:id', protect, adminOnly, deleteFaq);
 
 module.exports = router;
+

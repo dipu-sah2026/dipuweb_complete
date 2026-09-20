@@ -252,3 +252,4 @@ const AdminFaqs = () => {
 };
 
 export default AdminFaqs;
+
