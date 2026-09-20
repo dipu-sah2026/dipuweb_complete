@@ -185,7 +185,26 @@ const createOrder = async (req, res) => {
 
     let paymentScreenshot = '';
     if (req.file) {
-      paymentScreenshot = `/uploads/${req.file.filename}`;
+      try {
+        const config = await getCloudinaryConfig();
+        if (config.configured) {
+          const uploadRes = await config.cloudinary.uploader.upload(req.file.path, {
+            folder: 'dipueditx_screenshots',
+            resource_type: 'image',
+            overwrite: true,
+          });
+          paymentScreenshot = uploadRes.secure_url;
+          if (fs.existsSync(req.file.path)) {
+            try { fs.unlinkSync(req.file.path); } catch (e) {}
+          }
+          console.log(`[Order Screenshot]: Saved to Cloudinary: ${paymentScreenshot}`);
+        } else {
+          paymentScreenshot = `/uploads/${req.file.filename}`;
+        }
+      } catch (cErr) {
+        console.error('[Cloudinary Screenshot Upload Error]:', cErr.message);
+        paymentScreenshot = `/uploads/${req.file.filename}`;
+      }
     } else if (req.body.paymentScreenshotUrl) {
       paymentScreenshot = req.body.paymentScreenshotUrl;
     }

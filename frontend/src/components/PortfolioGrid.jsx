@@ -174,8 +174,10 @@ const PortfolioGrid = ({ limit }) => {
 
       {/* Video Modal Popup Player */}
       {selectedVideo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
-          <div className="relative w-full max-w-3xl bg-brand-card border border-brand-border rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 overflow-y-auto">
+          <div className={`relative w-full ${
+            selectedVideo.aspectRatio === '9:16' ? 'max-w-md' : 'max-w-3xl'
+          } bg-brand-card border border-brand-border rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 my-auto`}>
             
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 sm:p-5 border-b border-brand-border bg-slate-900/80">
@@ -196,7 +198,9 @@ const PortfolioGrid = ({ limit }) => {
             </div>
 
             {/* Video Player Embed */}
-            <div className="relative aspect-video bg-black flex items-center justify-center">
+            <div className={`relative bg-black flex items-center justify-center ${
+              selectedVideo.aspectRatio === '9:16' ? 'aspect-[9/16] max-h-[65vh] mx-auto' : 'aspect-video w-full'
+            }`}>
               {selectedVideo.videoUrl.includes('youtube') || selectedVideo.videoUrl.includes('youtu.be') ? (
                 <iframe
                   src={`${selectedVideo.videoUrl}?autoplay=1`}
@@ -210,6 +214,8 @@ const PortfolioGrid = ({ limit }) => {
                   src={selectedVideo.videoUrl}
                   controls
                   autoPlay
+                  playsInline
+                  preload="metadata"
                   className="w-full h-full object-contain"
                 />
               )}

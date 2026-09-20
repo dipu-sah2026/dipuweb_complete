@@ -151,7 +151,7 @@ const AdminSettings = () => {
   };
 
   const previewQrUri = `upi://pay?pa=${settings.upiId || '7481968724@upi'}&pn=${encodeURIComponent(settings.upiName || 'Dipu Sah')}&am=100&cu=INR`;
-  const qrPreviewImg = settings.customQrUrl || `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(previewQrUri)}`;
+  const qrPreviewImg = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(previewQrUri)}`;
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
@@ -220,17 +220,14 @@ const AdminSettings = () => {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">
-                  Custom QR Image URL (Optional - leave empty for auto-generated UPI QR)
-                </label>
-                <input
-                  type="url"
-                  value={settings.customQrUrl || ''}
-                  onChange={(e) => setSettings({ ...settings, customQrUrl: e.target.value })}
-                  placeholder="https://... or leave blank to auto-generate"
-                  className="w-full bg-slate-900 border border-brand-border rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-yellow"
-                />
+              <div className="bg-slate-900/70 p-3.5 rounded-xl border border-yellow-500/20 text-xs text-slate-400 space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-brand-yellow">
+                  <Sparkles className="w-3.5 h-3.5 text-brand-yellow" />
+                  <span>Dynamic Auto-Generated UPI QR Active</span>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Payment QR code client ke order amount aur aapke UPI ID ke mutabik automatically generate hota hai. Koi alag se QR upload karne ki jarurat nahi hai.
+                </p>
               </div>
             </div>
 

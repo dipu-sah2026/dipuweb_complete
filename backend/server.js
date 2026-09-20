@@ -57,6 +57,7 @@ app.use('/api/settings', require('./routes/settingRoutes'));
 app.use('/api/faqs', require('./routes/faqRoutes'));
 app.use('/api/coupons', require('./routes/couponRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/upload', require('./routes/uploadRoutes'));
 
 const mongoose = require('mongoose');
 

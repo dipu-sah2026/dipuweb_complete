@@ -38,7 +38,7 @@ const AdminOrders = () => {
 
   // Delivery Modal State
   const [selectedDeliveryOrder, setSelectedDeliveryOrder] = useState(null);
-  const [deliveryType, setDeliveryType] = useState('link'); // 'link' or 'video_upload'
+  const [deliveryType, setDeliveryType] = useState('video_upload'); // 'video_upload' by default for direct Cloudinary delivery
   const [deliveryUrlInput, setDeliveryUrlInput] = useState('');
   const [deliveryVideoFile, setDeliveryVideoFile] = useState(null);
   const [deliveryAdminNotes, setDeliveryAdminNotes] = useState('');
@@ -660,6 +660,25 @@ const AdminOrders = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
+                    onClick={() => setDeliveryType('video_upload')}
+                    className={`p-3 rounded-2xl border text-left flex items-start gap-2.5 transition-all ${
+                      deliveryType === 'video_upload'
+                        ? 'bg-cyan-950/60 border-cyan-500 text-white shadow-lg shadow-cyan-500/10'
+                        : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <Cloud className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs font-bold text-white">Direct Video Upload</p>
+                        <span className="text-[9px] font-black bg-cyan-500 text-black px-1.5 py-0.2 rounded">Cloudinary</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Upload MP4/MOV, direct stream for client</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => setDeliveryType('link')}
                     className={`p-3 rounded-2xl border text-left flex items-start gap-2.5 transition-all ${
                       deliveryType === 'link'
@@ -669,24 +688,8 @@ const AdminOrders = () => {
                   >
                     <ExternalLink className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-xs font-bold">External Cloud Link</p>
-                      <span className="text-[10px] text-slate-500 block">Google Drive, Mega, Dropbox</span>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setDeliveryType('video_upload')}
-                    className={`p-3 rounded-2xl border text-left flex items-start gap-2.5 transition-all ${
-                      deliveryType === 'video_upload'
-                        ? 'bg-cyan-950/50 border-cyan-500 text-white'
-                        : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    <Cloud className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-xs font-bold">Cloudinary Video Upload</p>
-                      <span className="text-[10px] text-slate-500 block">Direct video hosting up to 100MB</span>
+                      <p className="text-xs font-bold">External Drive Link</p>
+                      <span className="text-[10px] text-slate-500 block">Google Drive or Mega (for &gt;100MB files)</span>
                     </div>
                   </button>
                 </div>

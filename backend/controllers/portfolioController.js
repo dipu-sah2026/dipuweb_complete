@@ -29,11 +29,16 @@ const createPortfolioItem = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Title, category, and videoUrl are required' });
     }
 
+    let finalThumbnailUrl = thumbnailUrl || '';
+    if (!finalThumbnailUrl && videoUrl && (videoUrl.includes('cloudinary') || /\.(mp4|mov|webm|mkv)$/i.test(videoUrl))) {
+      finalThumbnailUrl = videoUrl.replace(/\.[^/.]+$/, '.jpg');
+    }
+
     const item = await Portfolio.create({
       title,
       category,
       videoUrl,
-      thumbnailUrl: thumbnailUrl || '',
+      thumbnailUrl: finalThumbnailUrl,
       aspectRatio: aspectRatio || '9:16',
       description: description || '',
       toolsUsed: Array.isArray(toolsUsed) ? toolsUsed : (toolsUsed ? toolsUsed.split(',').map(t => t.trim()) : ['CapCut', 'AI Tools']),
