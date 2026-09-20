@@ -17,6 +17,47 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
+class AdminErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Admin UI Error caught by ErrorBoundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="bg-brand-card border border-red-500/40 rounded-3xl p-8 max-w-xl mx-auto my-12 text-center shadow-2xl">
+          <div className="w-12 h-12 rounded-2xl bg-red-500/20 border border-red-500/30 flex items-center justify-center mx-auto mb-4 text-red-400 font-bold text-xl">
+            ⚠️
+          </div>
+          <h2 className="text-xl font-black text-white mb-2">Section Load Error</h2>
+          <p className="text-xs text-slate-400 mb-4 font-mono bg-slate-900 p-3 rounded-xl border border-slate-800 break-words text-left">
+            {this.state.error?.message || 'An unexpected rendering error occurred'}
+          </p>
+          <button
+            onClick={() => {
+              this.setState({ hasError: false, error: null });
+              window.location.reload();
+            }}
+            className="px-5 py-2.5 bg-brand-yellow hover:bg-brand-yellowHover text-black font-black text-xs rounded-xl shadow transition-all"
+          >
+            Refresh Page
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const AdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -107,7 +148,9 @@ const AdminLayout = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto min-h-screen bg-slate-950 p-6 sm:p-10">
-        <Outlet />
+        <AdminErrorBoundary>
+          <Outlet />
+        </AdminErrorBoundary>
       </main>
 
     </div>

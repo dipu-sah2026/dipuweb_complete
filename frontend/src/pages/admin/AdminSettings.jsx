@@ -17,7 +17,8 @@ import {
   Key,
   ExternalLink,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  X
 } from 'lucide-react';
 import api, { DEFAULT_SETTINGS } from '../../services/api';
 
