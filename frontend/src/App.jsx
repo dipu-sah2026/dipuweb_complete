@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import WhatsAppFloat from './components/WhatsAppFloat';
+import SiteProtection from './components/SiteProtection';
 
 // Public Pages
 import Home from './pages/Home';
@@ -79,6 +80,7 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <ScrollToTop />
+        <SiteProtection />
         <Routes>
           {/* Public Pages */}
           <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
