@@ -13,7 +13,7 @@ const ContactPage = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     // Dispatch to FormSubmit.co
-    fetch('https://formsubmit.co/ajax/dipusah7481@gmail.com', {
+    fetch('https://formsubmit.co/ajax/dipusah51858@gmail.com', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify({
@@ -81,9 +81,9 @@ const ContactPage = () => {
                     Email
                   </span>
                   <span className="text-sm font-black text-white">
-                    contact@dipueditx.in
+                    dipusah51858@gmail.com
                   </span>
-                  <p className="text-[11px] text-slate-400 mt-0.5">dipusah7481@gmail.com</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">dipusah51858@gmail.com</p>
                 </div>
               </div>
 
