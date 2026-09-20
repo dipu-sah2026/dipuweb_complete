@@ -1,4 +1,5 @@
 const Setting = require('../models/Setting');
+const { cloudinary, getCloudinaryConfig } = require('../config/cloudinary');
 
 // @desc    Get website global settings (Public)
 // @route   GET /api/settings
@@ -57,7 +58,47 @@ const updateSettings = async (req, res) => {
   }
 };
 
+// @desc    Test Cloudinary connection & credentials
+// @route   POST /api/settings/test-cloudinary
+// @access  Private/Admin
+const testCloudinaryConnection = async (req, res) => {
+  try {
+    const { cloudName, apiKey, apiSecret } = req.body;
+    const configResult = await getCloudinaryConfig({ cloudName, apiKey, apiSecret });
+
+    if (!configResult.configured) {
+      return res.status(400).json({
+        success: false,
+        message: configResult.error || 'Cloudinary credentials missing or incomplete',
+      });
+    }
+
+    // Call Cloudinary ping API to verify signature and credentials
+    const pingRes = await cloudinary.api.ping();
+    res.json({
+      success: true,
+      message: `✅ Cloudinary connected successfully for cloud: "${configResult.cloudName}"! (Ping status: ${pingRes.status})`,
+      cloudName: configResult.cloudName,
+    });
+  } catch (err) {
+    console.error('[Cloudinary Test Error]:', err);
+    let errMsg = err.message || 'Connection failed';
+    if (errMsg.includes('Invalid Signature')) {
+      errMsg = 'Invalid Signature: Cloudinary API Secret galat hai ya match nahi ho raha. Kripya Cloudinary Console Dashboard se dobara copy karein.';
+    } else if (errMsg.includes('Invalid API Key') || errMsg.includes('Unknown API key')) {
+      errMsg = 'Invalid API Key: API Key match nahi hui. Kripya check karein.';
+    } else if (errMsg.includes('Must supply api_secret')) {
+      errMsg = 'API Secret missing hai. Kripya API Secret dalein.';
+    }
+    res.status(400).json({
+      success: false,
+      message: errMsg,
+    });
+  }
+};
+
 module.exports = {
   getSettings,
   updateSettings,
+  testCloudinaryConnection,
 };

@@ -15,7 +15,9 @@ import {
   EyeOff,
   Cloud,
   Key,
-  ExternalLink
+  ExternalLink,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import api, { DEFAULT_SETTINGS } from '../../services/api';
 
@@ -24,6 +26,73 @@ const AdminSettings = () => {
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [showCloudinarySecret, setShowCloudinarySecret] = useState(false);
+
+  // Cloudinary testing state
+  const [testingCloudinary, setTestingCloudinary] = useState(false);
+  const [cloudinaryStatusMsg, setCloudinaryStatusMsg] = useState('');
+  const [cloudinaryStatusType, setCloudinaryStatusType] = useState('');
+
+  const handleCloudinaryChange = (field, rawValue) => {
+    let val = (rawValue || '').trim().replace(/^['"]|['"]$/g, '');
+    
+    // Auto-parse if user pasted full CLOUDINARY_URL: cloudinary://<key>:<secret>@<cloud_name>
+    if (val.startsWith('cloudinary://')) {
+      try {
+        const parsed = new URL(val);
+        setSettings((prev) => ({
+          ...prev,
+          cloudinary: {
+            cloudName: parsed.hostname,
+            apiKey: parsed.username,
+            apiSecret: parsed.password,
+          },
+        }));
+        setCloudinaryStatusMsg('✅ Full Cloudinary URL detected & auto-filled Cloud Name, Key, and Secret!');
+        setCloudinaryStatusType('success');
+        return;
+      } catch (e) {}
+    }
+
+    setSettings((prev) => ({
+      ...prev,
+      cloudinary: {
+        ...(prev.cloudinary || {}),
+        [field]: val,
+      },
+    }));
+  };
+
+  const handleTestCloudinary = async () => {
+    const cloudName = (settings.cloudinary?.cloudName || '').trim();
+    const apiKey = (settings.cloudinary?.apiKey || '').trim();
+    const apiSecret = (settings.cloudinary?.apiSecret || '').trim();
+
+    if (!cloudName || !apiKey || !apiSecret) {
+      setCloudinaryStatusMsg('⚠️ Kripya Cloud Name, API Key, aur API Secret teeno fill karein!');
+      setCloudinaryStatusType('error');
+      return;
+    }
+
+    setTestingCloudinary(true);
+    setCloudinaryStatusMsg('');
+    try {
+      const res = await api.post('/settings/test-cloudinary', {
+        cloudName,
+        apiKey,
+        apiSecret,
+      });
+
+      if (res.data?.success) {
+        setCloudinaryStatusMsg(res.data.message || '✅ Cloudinary credentials are valid and connected!');
+        setCloudinaryStatusType('success');
+      }
+    } catch (err) {
+      setCloudinaryStatusMsg(err.response?.data?.message || '❌ Cloudinary connection failed. Please re-check your API Secret.');
+      setCloudinaryStatusType('error');
+    } finally {
+      setTestingCloudinary(false);
+    }
+  };
 
   // Password change state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -242,18 +311,18 @@ const AdminSettings = () => {
 
         {/* 2.5 Cloudinary API Configuration */}
         <div className="space-y-4 pb-6 border-b border-brand-border">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <h3 className="text-lg font-black text-white flex items-center gap-2">
               <Cloud className="w-5 h-5 text-cyan-400" />
               <span>Cloudinary API (Video Hosting & Direct Delivery)</span>
             </h3>
             {settings.cloudinary?.cloudName && settings.cloudinary?.apiKey && settings.cloudinary?.apiSecret ? (
-              <span className="text-xs font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-500/40 px-3 py-1 rounded-full flex items-center gap-1">
+              <span className="text-xs font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-500/40 px-3 py-1 rounded-full flex items-center gap-1 w-fit">
                 <CheckCircle className="w-3.5 h-3.5" />
-                API Configured
+                API Saved
               </span>
             ) : (
-              <span className="text-xs font-bold text-amber-400 bg-amber-950/80 border border-amber-500/40 px-3 py-1 rounded-full">
+              <span className="text-xs font-bold text-amber-400 bg-amber-950/80 border border-amber-500/40 px-3 py-1 rounded-full w-fit">
                 ⚠️ Not Configured
               </span>
             )}
@@ -263,6 +332,29 @@ const AdminSettings = () => {
             Jab aap Admin panel se client ko direct video upload karke deliver karenge, toh video aapke Cloudinary account me upload hogi aur uska direct streaming link client ko mil jayega. (Free tier: 25 GB storage).
           </p>
 
+          {/* Test Status Alert */}
+          {cloudinaryStatusMsg && (
+            <div className={`p-3.5 rounded-2xl border text-xs font-bold flex items-center gap-2.5 animate-in fade-in ${
+              cloudinaryStatusType === 'success'
+                ? 'bg-emerald-950/70 border-emerald-500 text-emerald-300'
+                : 'bg-red-950/70 border-red-500 text-red-300'
+            }`}>
+              {cloudinaryStatusType === 'success' ? (
+                <CheckCircle className="w-4 h-4 shrink-0 text-emerald-400" />
+              ) : (
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+              )}
+              <span className="flex-1">{cloudinaryStatusMsg}</span>
+              <button
+                type="button"
+                onClick={() => setCloudinaryStatusMsg('')}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1">
@@ -271,15 +363,11 @@ const AdminSettings = () => {
               <input
                 type="text"
                 value={settings.cloudinary?.cloudName || ''}
-                onChange={(e) =>
-                  setSettings({
-                    ...settings,
-                    cloudinary: { ...settings.cloudinary, cloudName: e.target.value },
-                  })
-                }
-                placeholder="e.g. dpxvideo"
+                onChange={(e) => handleCloudinaryChange('cloudName', e.target.value)}
+                placeholder="e.g. dipueditx"
                 className="w-full bg-slate-900 border border-brand-border rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-yellow font-mono"
               />
+              <span className="text-[10px] text-slate-500 mt-1 block">Your Cloudinary account name</span>
             </div>
 
             <div>
@@ -289,15 +377,11 @@ const AdminSettings = () => {
               <input
                 type="text"
                 value={settings.cloudinary?.apiKey || ''}
-                onChange={(e) =>
-                  setSettings({
-                    ...settings,
-                    cloudinary: { ...settings.cloudinary, apiKey: e.target.value },
-                  })
-                }
+                onChange={(e) => handleCloudinaryChange('apiKey', e.target.value)}
                 placeholder="e.g. 849281938192831"
                 className="w-full bg-slate-900 border border-brand-border rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-yellow font-mono"
               />
+              <span className="text-[10px] text-slate-500 mt-1 block">15-digit number from dashboard</span>
             </div>
 
             <div>
@@ -315,29 +399,49 @@ const AdminSettings = () => {
               <input
                 type={showCloudinarySecret ? 'text' : 'password'}
                 value={settings.cloudinary?.apiSecret || ''}
-                onChange={(e) =>
-                  setSettings({
-                    ...settings,
-                    cloudinary: { ...settings.cloudinary, apiSecret: e.target.value },
-                  })
-                }
+                onChange={(e) => handleCloudinaryChange('apiSecret', e.target.value)}
                 placeholder="••••••••••••••••••••"
                 className="w-full bg-slate-900 border border-brand-border rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-yellow font-mono"
               />
+              <span className="text-[10px] text-slate-500 mt-1 block">~27-character secret string</span>
             </div>
           </div>
 
-          <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800 text-[11px] text-slate-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-            <span>🔑 Free API credentials kahan milenge? <strong>cloudinary.com</strong> pe free sign-up karke Dashboard se copy karein.</span>
-            <a
-              href="https://cloudinary.com/users/register_free"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-cyan-400 hover:underline flex items-center gap-1 font-bold shrink-0"
-            >
-              <span>Get Free API Key</span>
-              <ExternalLink className="w-3 h-3" />
-            </a>
+          <div className="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 text-[11px] text-slate-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span>💡 Aap poora <strong>CLOUDINARY_URL</strong> bhi kisi ek box me paste kar sakte hain, wo automatically teeno me set ho jayega.</span>
+            </div>
+            
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={handleTestCloudinary}
+                disabled={testingCloudinary}
+                className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow transition-all disabled:opacity-75"
+              >
+                {testingCloudinary ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Testing Connection...</span>
+                  </>
+                ) : (
+                  <>
+                    <Cloud className="w-3.5 h-3.5" />
+                    <span>🔌 Test Connection</span>
+                  </>
+                )}
+              </button>
+
+              <a
+                href="https://cloudinary.com/users/register_free"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-cyan-400 hover:underline flex items-center gap-1 font-bold text-xs"
+              >
+                <span>Get Keys</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
           </div>
         </div>
 

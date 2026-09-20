@@ -87,14 +87,17 @@ const settingSchema = new mongoose.Schema(
     cloudinary: {
       cloudName: {
         type: String,
+        trim: true,
         default: '',
       },
       apiKey: {
         type: String,
+        trim: true,
         default: '',
       },
       apiSecret: {
         type: String,
+        trim: true,
         default: '',
       },
     },

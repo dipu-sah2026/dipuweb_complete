@@ -403,9 +403,17 @@ const deliverOrder = async (req, res) => {
           try { fs.unlinkSync(req.file.path); } catch (e) {}
         }
         console.error('[Cloudinary Upload Error]:', uploadErr);
+
+        let userFriendlyMsg = uploadErr.message || 'Unknown upload error';
+        if (userFriendlyMsg.includes('Invalid Signature')) {
+          userFriendlyMsg = 'Cloudinary "Invalid Signature" error: Aapka Cloudinary API Secret galat hai ya match nahi ho raha. Kripya /admin/settings me jakar Cloudinary Console se sahi API Secret copy karke dalein aur "Test Connection" dabakar verify karein.';
+        } else if (userFriendlyMsg.includes('Invalid API Key') || userFriendlyMsg.includes('Unknown API key')) {
+          userFriendlyMsg = 'Cloudinary "Invalid API Key" error: Aapki API Key sahi nahi hai. Kripya /admin/settings me check karein.';
+        }
+
         return res.status(500).json({
           success: false,
-          message: `Cloudinary upload failed: ${uploadErr.message || 'Unknown upload error'}`,
+          message: `Cloudinary upload failed: ${userFriendlyMsg}`,
         });
       }
     } else {
