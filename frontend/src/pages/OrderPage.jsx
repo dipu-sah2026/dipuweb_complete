@@ -18,6 +18,7 @@ import {
   FileText,
   AlertCircle,
   Percent,
+  CreditCard,
   X
 } from 'lucide-react';
 import api, { DEFAULT_SERVICES, DEFAULT_SETTINGS } from '../services/api';
@@ -762,12 +763,22 @@ const OrderPage = () => {
                     Click to Open UPI App (Mobile)
                   </a>
 
-                  {/* Coupon Code Input */}
-                  <div className="mb-4 bg-slate-900/80 p-3 rounded-2xl border border-brand-border">
+                  {/* Discount Coupon Code Box (Clearly Labeled Optional) */}
+                  <div className="mb-4 bg-slate-900/60 p-3.5 rounded-2xl border border-dashed border-slate-700">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
+                        <Tag className="w-3.5 h-3.5 text-brand-yellow" />
+                        Have a Promo / Coupon Code? (Optional)
+                      </span>
+                      <span className="text-[10px] text-brand-yellow font-bold">
+                        Optional
+                      </span>
+                    </div>
+
                     {appliedCoupon ? (
-                      <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center justify-between text-xs bg-emerald-950/40 border border-emerald-500/30 p-2 rounded-xl">
                         <div className="flex items-center gap-2 text-emerald-400 font-bold">
-                          <Tag className="w-4 h-4" />
+                          <Check className="w-4 h-4" />
                           <span>Coupon {appliedCoupon.code} Applied (-₹{discountAmount})</span>
                         </div>
                         <button
@@ -783,30 +794,33 @@ const OrderPage = () => {
                         <div className="flex gap-2">
                           <input
                             type="text"
-                            placeholder="Promo Code (e.g. DIPU10)"
+                            maxLength={12}
+                            placeholder="Coupon Code (e.g. DIPU10)"
                             value={couponCode}
-                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                            className="flex-1 bg-slate-950 border border-brand-border rounded-xl px-3 py-2 text-xs font-mono font-bold text-white uppercase focus:outline-none focus:border-brand-yellow"
+                            onChange={(e) => setCouponCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                            className="flex-1 bg-slate-950 border border-slate-750 rounded-xl px-3 py-2 text-xs font-mono font-bold text-white uppercase focus:outline-none focus:border-brand-yellow"
                           />
                           <button
                             type="button"
                             onClick={handleApplyCoupon}
                             disabled={couponLoading}
-                            className="px-3.5 py-2 bg-brand-yellow text-black font-black text-xs rounded-xl hover:bg-yellow-400"
+                            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-brand-yellow font-black text-xs rounded-xl border border-brand-yellow/40 transition-colors"
                           >
-                            {couponLoading ? 'Checking...' : 'Apply'}
+                            {couponLoading ? 'Checking...' : 'Apply Code'}
                           </button>
                         </div>
                         {couponError && (
                           <p className="text-[11px] text-red-400 mt-1.5">{couponError}</p>
                         )}
-                        <p className="text-[10px] text-slate-500 mt-1">Available codes: <strong>DIPU10</strong> (10% off), <strong>FIRSTORDER</strong> (₹20 off)</p>
+                        <p className="text-[10px] text-slate-500 mt-1.5">
+                          Coupons: <span className="text-slate-400 font-mono font-bold">DIPU10</span> (10% off), <span className="text-slate-400 font-mono font-bold">FIRSTORDER</span> (₹20 off)
+                        </p>
                       </div>
                     )}
                   </div>
 
                   {/* Price Breakdown */}
-                  <div className="bg-brand-cardLight rounded-2xl p-4 mb-4 border border-brand-border space-y-1.5 text-xs text-slate-300">
+                  <div className="bg-brand-cardLight rounded-2xl p-4 mb-5 border border-brand-border space-y-1.5 text-xs text-slate-300">
                     <div className="flex justify-between">
                       <span>Base Video Price ({quantity}x):</span>
                       <span className="font-bold text-white">₹{baseServicePrice}</span>
@@ -835,19 +849,25 @@ const OrderPage = () => {
                     </div>
                   </div>
 
-                  {/* UTR Input Section */}
-                  <div className="space-y-3">
+                  {/* Dedicated Step 4: Mandatory UTR Input Section */}
+                  <div className="bg-slate-950 p-4 sm:p-5 rounded-2xl border-2 border-brand-yellow shadow-xl space-y-3">
                     <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-xs font-black text-brand-yellow uppercase tracking-wider">
-                          Enter 12-Digit UTR / Transaction ID *
-                        </label>
-                        <span className={`text-[10px] font-mono font-bold ${
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-black text-brand-yellow uppercase tracking-wider bg-yellow-500/15 px-2.5 py-1 rounded-md border border-yellow-500/30">
+                          <CreditCard className="w-3.5 h-3.5" />
+                          Step 4: Enter 12-Digit UTR (Mandatory) *
+                        </span>
+                        <span className={`text-[11px] font-mono font-black ${
                           utrNumber.length === 12 && !utrError ? 'text-emerald-400' : utrError ? 'text-red-400' : 'text-slate-400'
                         }`}>
                           {utrNumber.length}/12 Digits
                         </span>
                       </div>
+
+                      <p className="text-[11px] text-slate-300 mb-2">
+                        UPI App (PhonePe / GPay / Paytm) me payment complete karne ke baad <strong>12-digit UTR Number</strong> yahan dalein:
+                      </p>
+
                       <div className="relative">
                         <input
                           type="text"
@@ -863,24 +883,24 @@ const OrderPage = () => {
                               ? 'border-red-500 focus:border-red-400 text-red-200'
                               : utrNumber.length === 12
                               ? 'border-emerald-500 text-emerald-300'
-                              : 'border-brand-yellow/50 focus:border-brand-yellow text-white'
-                          } rounded-xl px-4 py-2.5 text-sm font-mono font-bold tracking-widest focus:outline-none transition-colors`}
+                              : 'border-brand-yellow/60 focus:border-brand-yellow text-white'
+                          } rounded-xl px-4 py-3 text-base font-mono font-bold tracking-widest focus:outline-none transition-colors`}
                         />
                         {utrNumber.length === 12 && !utrError && (
-                          <span className="absolute right-3 top-2.5 text-emerald-400 text-xs flex items-center gap-1 font-bold">
-                            <Check className="w-4 h-4" /> Valid Format
+                          <span className="absolute right-3 top-3 text-emerald-400 text-xs flex items-center gap-1 font-bold bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/30">
+                            <Check className="w-4 h-4" /> 12 Digits Valid
                           </span>
                         )}
                       </div>
 
                       {utrError ? (
-                        <p className="text-[11px] text-red-400 font-medium mt-1.5 flex items-center gap-1">
-                          <AlertCircle className="w-3.5 h-3.5 shrink-0 text-red-400" />
+                        <p className="text-xs text-red-400 font-semibold mt-2 flex items-center gap-1.5 bg-red-950/40 p-2 rounded-lg border border-red-500/30">
+                          <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
                           <span>{utrError}</span>
                         </p>
                       ) : (
-                        <p className="text-[10px] text-slate-400 mt-1">
-                          Payment ke baad UPI app (PhonePe / GPay / Paytm) me 12-digit numeric UTR dikhta hai. Dummy / fake number allow nahi hai.
+                        <p className="text-[10px] text-slate-400 mt-1.5">
+                          Sirf 12-digit numeric bank UTR allow hai. Letters, symbols ya fake numbers (123456...) reject ho jayenge.
                         </p>
                       )}
                     </div>
