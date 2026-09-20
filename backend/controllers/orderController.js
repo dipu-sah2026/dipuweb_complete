@@ -8,14 +8,19 @@ const sendFormSubmitNotification = async (orderData, targetEmail) => {
     const recipient = targetEmail || process.env.FORMSUBMIT_EMAIL || 'dipusah7481@gmail.com';
     const formSubmitUrl = `https://formsubmit.co/ajax/${recipient}`;
     
-    await fetch(formSubmitUrl, {
+    const res = await fetch(formSubmitUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'Origin': 'https://dipueditx.in',
+        'Referer': 'https://dipueditx.in/order',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       },
       body: JSON.stringify({
         _subject: `🔥 New Order #${orderData.orderId} - ${orderData.clientName} (₹${orderData.amount})`,
+        _captcha: 'false',
+        _template: 'table',
         OrderID: orderData.orderId,
         InvoiceNo: orderData.invoiceNumber,
         ClientName: orderData.clientName,
@@ -34,7 +39,14 @@ const sendFormSubmitNotification = async (orderData, targetEmail) => {
         Timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
       }),
     });
-    console.log(`[FormSubmit Notification Sent]: Order #${orderData.orderId} to ${recipient}`);
+
+    const result = await res.json().catch(() => ({}));
+    console.log(`[FormSubmit Response]:`, result);
+    if (result.success === 'true' || result.success === true) {
+      console.log(`[FormSubmit Notification Sent]: Order #${orderData.orderId} to ${recipient}`);
+    } else {
+      console.warn(`[FormSubmit Notice]: ${result.message || 'Check email for activation link'}`);
+    }
   } catch (err) {
     console.error(`[FormSubmit Notification Error]: ${err.message}`);
   }

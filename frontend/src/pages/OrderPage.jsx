@@ -321,6 +321,32 @@ const OrderPage = () => {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setSubmittedOrder(res.data.data);
+
+      // Client-side FormSubmit redundancy trigger
+      try {
+        const formSubmitRecipient = settings?.formSubmitEmail || 'dipusah7481@gmail.com';
+        fetch(`https://formsubmit.co/ajax/${formSubmitRecipient}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({
+            _subject: `🔥 New Order #${res.data?.data?.orderId || 'NEW'} - ${clientName} (₹${finalPrice})`,
+            _captcha: 'false',
+            _template: 'table',
+            OrderID: res.data?.data?.orderId || 'NEW',
+            ClientName: clientName,
+            WhatsApp: clientPhone,
+            Email: clientEmail,
+            Service: selectedService.title,
+            DeliverySpeed: deliverySpeed,
+            Amount: `₹${finalPrice}`,
+            UTR_Number: utrNumber.trim(),
+            Notes: scriptNotes || 'N/A',
+            DriveLink: rawFilesLink || 'N/A',
+          }),
+        }).catch(() => {});
+      } catch (e) {
+        // Silently ignore frontend client-side delivery error
+      }
     } catch (err) {
       // Fallback in dev/offline
       const mockOrder = {
@@ -338,6 +364,26 @@ const OrderPage = () => {
         createdAt: new Date().toISOString(),
       };
       setSubmittedOrder(mockOrder);
+
+      // Trigger client-side FormSubmit in fallback mode too
+      try {
+        fetch('https://formsubmit.co/ajax/dipusah51858@gmail.com', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({
+            _subject: `🔥 New Order #${mockOrder.orderId} - ${clientName} (₹${finalPrice})`,
+            _captcha: 'false',
+            _template: 'table',
+            OrderID: mockOrder.orderId,
+            ClientName: clientName,
+            WhatsApp: clientPhone,
+            Email: clientEmail,
+            Service: selectedService.title,
+            Amount: `₹${finalPrice}`,
+            UTR_Number: utrNumber.trim(),
+          }),
+        }).catch(() => {});
+      } catch (e) {}
     } finally {
       setSubmitting(false);
     }
