@@ -40,6 +40,80 @@ const sendFormSubmitNotification = async (orderData, targetEmail) => {
   }
 };
 
+// Strict UPI UTR Format Validator (12 numeric digits, anti-dummy/anti-sequence)
+const validateUtrFormat = (val) => {
+  if (!val || typeof val !== 'string') {
+    return { valid: false, message: '12-digit UPI UTR number is required.' };
+  }
+  const clean = val.trim();
+  if (!/^\d+$/.test(clean)) {
+    return { valid: false, message: 'UTR must contain only numbers (0-9). Letters or symbols are not allowed.' };
+  }
+  if (clean.length !== 12) {
+    return { valid: false, message: `UTR must be exactly 12 numeric digits (received ${clean.length} digits).` };
+  }
+
+  // Common dummy / test number blacklist
+  const blacklist = [
+    '123456789123',
+    '123456789012',
+    '987654321098',
+    '012345678901',
+    '123456123456',
+    '987654987654',
+    '112233445566',
+    '121212121212',
+    '123123123123',
+    '123412341234',
+  ];
+  if (blacklist.includes(clean)) {
+    return { valid: false, message: 'Demo / fake UTR (jaise 123456789123) allowed nahi hai. Kripya real payment UTR enter karein.' };
+  }
+
+  // Reject identical repeating digits (e.g. 000000000000, 111111111111, 999999999999)
+  if (/^(\d)\1{11}$/.test(clean)) {
+    return { valid: false, message: 'Fake / dummy UTR (identical repeating digits) is not allowed.' };
+  }
+
+  // Check consecutive sequential runs (e.g. 123456..., 987654...)
+  let ascRun = 1;
+  let descRun = 1;
+  for (let i = 1; i < clean.length; i++) {
+    const prev = parseInt(clean[i - 1], 10);
+    const curr = parseInt(clean[i], 10);
+    if (curr === (prev + 1) % 10) {
+      ascRun++;
+      if (ascRun >= 5) return { valid: false, message: 'Counting / sequence dummy UTR is not allowed.' };
+    } else {
+      ascRun = 1;
+    }
+    if (curr === (prev - 1 + 10) % 10) {
+      descRun++;
+      if (descRun >= 5) return { valid: false, message: 'Sequence dummy UTR is not allowed.' };
+    } else {
+      descRun = 1;
+    }
+  }
+
+  // Reject repeating patterns (e.g. 121212121212, 123123123123, 123412341234)
+  if (
+    clean.slice(0, 2).repeat(6) === clean ||
+    clean.slice(0, 3).repeat(4) === clean ||
+    clean.slice(0, 4).repeat(3) === clean ||
+    clean.slice(0, 6).repeat(2) === clean
+  ) {
+    return { valid: false, message: 'Repeating pattern dummy UTR is not allowed.' };
+  }
+
+  // Entropy check: Real bank UTR has at least 4 distinct digits
+  const uniqueCount = new Set(clean.split('')).size;
+  if (uniqueCount < 4) {
+    return { valid: false, message: 'Invalid / dummy UTR number. Please enter a genuine 12-digit bank UTR.' };
+  }
+
+  return { valid: true, message: '' };
+};
+
 // @desc    Create new order / lead with payment UTR
 // @route   POST /api/orders
 // @access  Public / Client
@@ -67,6 +141,25 @@ const createOrder = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Please provide Name, Email, Phone, Service, and UTR number',
+      });
+    }
+
+    // Validate UTR format and authenticity
+    const cleanUtr = String(utrNumber).trim();
+    const utrCheck = validateUtrFormat(cleanUtr);
+    if (!utrCheck.valid) {
+      return res.status(400).json({
+        success: false,
+        message: utrCheck.message,
+      });
+    }
+
+    // Duplicate UTR check (Cannot reuse an existing payment UTR)
+    const existingOrderWithUtr = await Order.findOne({ utrNumber: cleanUtr });
+    if (existingOrderWithUtr) {
+      return res.status(400).json({
+        success: false,
+        message: 'Yeh UTR number pehle se ek doosre order me submit kiya ja chuka hai. Kripya apna new payment UTR enter karein.',
       });
     }
 

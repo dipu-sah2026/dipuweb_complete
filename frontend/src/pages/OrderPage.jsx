@@ -65,9 +65,98 @@ const OrderPage = () => {
   const [scriptNotes, setScriptNotes] = useState('');
   const [rawFilesLink, setRawFilesLink] = useState('');
   const [utrNumber, setUtrNumber] = useState('');
+  const [utrError, setUtrError] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [screenshotPreview, setScreenshotPreview] = useState('');
   const [screenshotFile, setScreenshotFile] = useState(null);
+
+  // Validate UTR format and strictly reject dummy/fake numbers
+  const validateUtrFormat = (val) => {
+    if (!val || val.length === 0) {
+      return { valid: false, message: '12-digit UPI UTR number enter karna zaroori hai.' };
+    }
+    if (!/^\d+$/.test(val)) {
+      return { valid: false, message: 'Sirf numeric numbers allow hain. Letters ya symbols na dalein.' };
+    }
+    if (val.length !== 12) {
+      return { valid: false, message: `Theek 12 digits ka UTR dalein (${val.length}/12 entered).` };
+    }
+
+    // Common dummy / test number blacklist
+    const blacklist = [
+      '123456789123',
+      '123456789012',
+      '987654321098',
+      '012345678901',
+      '123456123456',
+      '987654987654',
+      '112233445566',
+      '121212121212',
+      '123123123123',
+      '123412341234',
+    ];
+    if (blacklist.includes(val)) {
+      return { valid: false, message: 'Demo / fake UTR (jaise 123456789123) allowed nahi hai. Kripya real payment UTR enter karein.' };
+    }
+
+    // Reject identical digits: 000000000000, 111111111111, 999999999999
+    if (/^(\d)\1{11}$/.test(val)) {
+      return { valid: false, message: 'Fake / dummy UTR (identical digits) allowed nahi hai.' };
+    }
+
+    // Check consecutive sequential runs (e.g. 123456..., 987654...)
+    let ascRun = 1;
+    let descRun = 1;
+    for (let i = 1; i < val.length; i++) {
+      const prev = parseInt(val[i - 1], 10);
+      const curr = parseInt(val[i], 10);
+      if (curr === (prev + 1) % 10) {
+        ascRun++;
+        if (ascRun >= 5) return { valid: false, message: 'Counting / sequence wala fake UTR allowed nahi hai.' };
+      } else {
+        ascRun = 1;
+      }
+      if (curr === (prev - 1 + 10) % 10) {
+        descRun++;
+        if (descRun >= 5) return { valid: false, message: 'Sequence wala fake UTR allowed nahi hai.' };
+      } else {
+        descRun = 1;
+      }
+    }
+
+    // Reject common repeating blocks
+    if (
+      val.slice(0, 2).repeat(6) === val ||
+      val.slice(0, 3).repeat(4) === val ||
+      val.slice(0, 4).repeat(3) === val ||
+      val.slice(0, 6).repeat(2) === val
+    ) {
+      return { valid: false, message: 'Repeating pattern wala fake UTR allowed nahi hai.' };
+    }
+
+    // Entropy check: At least 4 distinct digits
+    const uniqueCount = new Set(val.split('')).size;
+    if (uniqueCount < 4) {
+      return { valid: false, message: 'Valid bank UTR enter karein. Dummy number allowed nahi hai.' };
+    }
+
+    return { valid: true, message: '' };
+  };
+
+  const handleUtrChange = (e) => {
+    // Only accept numeric digits, capped strictly at 12 characters
+    const cleaned = e.target.value.replace(/\D/g, '').slice(0, 12);
+    setUtrNumber(cleaned);
+
+    if (cleaned.length === 12) {
+      const check = validateUtrFormat(cleaned);
+      setUtrError(check.valid ? '' : check.message);
+    } else if (cleaned.length > 0) {
+      setUtrError(`12 digits required (${cleaned.length}/12 entered)`);
+    } else {
+      setUtrError('');
+    }
+  };
 
   // Coupon Engine States
   const [couponCode, setCouponCode] = useState('');
@@ -197,8 +286,10 @@ const OrderPage = () => {
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
 
-    if (!utrNumber || utrNumber.trim().length < 6) {
-      alert('Kripya valid 12-digit UPI UTR number / Transaction ID enter karein.');
+    const utrCheck = validateUtrFormat(utrNumber);
+    if (!utrCheck.valid) {
+      setUtrError(utrCheck.message);
+      alert(utrCheck.message);
       return;
     }
 
@@ -747,20 +838,51 @@ const OrderPage = () => {
                   {/* UTR Input Section */}
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-xs font-black text-brand-yellow mb-1 uppercase tracking-wider">
-                        Enter 12-Digit UTR / Transaction ID *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={utrNumber}
-                        onChange={(e) => setUtrNumber(e.target.value)}
-                        placeholder="e.g. 428910394821"
-                        className="w-full bg-slate-900 border-2 border-brand-yellow/50 rounded-xl px-4 py-2.5 text-sm text-white font-mono font-bold focus:outline-none focus:border-brand-yellow"
-                      />
-                      <p className="text-[10px] text-slate-400 mt-1">
-                        Payment ke baad UPI app (PhonePe/GPay) me 12-digit UTR dikhta hai.
-                      </p>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-black text-brand-yellow uppercase tracking-wider">
+                          Enter 12-Digit UTR / Transaction ID *
+                        </label>
+                        <span className={`text-[10px] font-mono font-bold ${
+                          utrNumber.length === 12 && !utrError ? 'text-emerald-400' : utrError ? 'text-red-400' : 'text-slate-400'
+                        }`}>
+                          {utrNumber.length}/12 Digits
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          maxLength={12}
+                          required
+                          value={utrNumber}
+                          onChange={handleUtrChange}
+                          placeholder="e.g. 428910394821"
+                          className={`w-full bg-slate-900 border-2 ${
+                            utrError
+                              ? 'border-red-500 focus:border-red-400 text-red-200'
+                              : utrNumber.length === 12
+                              ? 'border-emerald-500 text-emerald-300'
+                              : 'border-brand-yellow/50 focus:border-brand-yellow text-white'
+                          } rounded-xl px-4 py-2.5 text-sm font-mono font-bold tracking-widest focus:outline-none transition-colors`}
+                        />
+                        {utrNumber.length === 12 && !utrError && (
+                          <span className="absolute right-3 top-2.5 text-emerald-400 text-xs flex items-center gap-1 font-bold">
+                            <Check className="w-4 h-4" /> Valid Format
+                          </span>
+                        )}
+                      </div>
+
+                      {utrError ? (
+                        <p className="text-[11px] text-red-400 font-medium mt-1.5 flex items-center gap-1">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0 text-red-400" />
+                          <span>{utrError}</span>
+                        </p>
+                      ) : (
+                        <p className="text-[10px] text-slate-400 mt-1">
+                          Payment ke baad UPI app (PhonePe / GPay / Paytm) me 12-digit numeric UTR dikhta hai. Dummy / fake number allow nahi hai.
+                        </p>
+                      )}
                     </div>
 
                     {/* Screenshot Upload with Live Preview */}

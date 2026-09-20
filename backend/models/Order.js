@@ -81,8 +81,9 @@ const orderSchema = new mongoose.Schema(
     },
     utrNumber: {
       type: String,
-      required: true,
+      required: [true, 'UTR number is required'],
       trim: true,
+      match: [/^\d{12}$/, 'UTR number must be exactly 12 numeric digits'],
     },
     paymentScreenshot: {
       type: String,
