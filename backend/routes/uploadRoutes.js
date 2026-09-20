@@ -80,20 +80,22 @@ router.post('/media', protect, adminOnly, upload.videoUpload.single('file'), asy
     }
     console.error('[Upload API Error]:', error);
 
-    let errorMsg = error.message || 'Failed to upload media to Cloudinary';
-    if (errorMsg.includes('Invalid Signature')) {
+    let rawDetails = error.error?.message || error.message || String(error);
+    console.error('[Upload API Error Raw]:', error);
+
+    let errorMsg = `Cloudinary Upload Error (${rawDetails})`;
+    if (rawDetails.includes('Invalid Signature')) {
       errorMsg = 'Cloudinary "Invalid Signature" error: Aapka Cloudinary API Secret galat hai ya match nahi ho raha. Kripya /admin/settings me jakar sahi API Secret dalein aur "Test Connection" karein.';
-    } else if (errorMsg.includes('Invalid API Key') || errorMsg.includes('Unknown API key')) {
+    } else if (rawDetails.includes('Invalid API Key') || rawDetails.includes('Unknown API key')) {
       errorMsg = 'Cloudinary "Invalid API Key" error: Aapki API Key match nahi hui. Kripya /admin/settings me check karein.';
-    } else if (errorMsg.includes('Must supply api_secret')) {
+    } else if (rawDetails.includes('Must supply api_secret')) {
       errorMsg = 'Cloudinary API Secret missing hai. Kripya /admin/settings me jakar API Secret dalein.';
-    } else if (errorMsg.includes('403') || errorMsg.includes('unexpected status code - 403')) {
-      errorMsg = 'Cloudinary 403 Forbidden Error: Aapka Cloud Name, API Key, ya API Secret galat hai ya account active nahi hai. Kripya /admin/settings me jakar Cloud Name (lower-case), API Key, aur Secret verify karein.';
     }
 
     res.status(400).json({
       success: false,
       message: errorMsg,
+      rawError: rawDetails,
     });
   }
 });
