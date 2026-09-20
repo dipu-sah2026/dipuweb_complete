@@ -403,7 +403,8 @@ const deliverOrder = async (req, res) => {
 
       try {
         console.log(`[Cloudinary Delivery] Uploading video for Order #${order.orderId} (${req.file.size} bytes)...`);
-        const uploadResult = await cloudinary.uploader.upload(req.file.path, {
+        // Use cloudConfig.cloudinary (configured with DB credentials) not the bare global import
+        const uploadResult = await cloudConfig.cloudinary.uploader.upload(req.file.path, {
           resource_type: 'video',
           folder: 'dipueditx_deliveries',
           public_id: `delivery_${order.orderId}_${Date.now()}`,

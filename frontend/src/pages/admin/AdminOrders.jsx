@@ -47,7 +47,7 @@ const AdminOrders = () => {
 
   const openDeliveryModal = (ord) => {
     setSelectedDeliveryOrder(ord);
-    setDeliveryType(ord.deliveryType || 'link');
+    setDeliveryType(ord.deliveryType === 'video_upload' ? 'video_upload' : 'video_upload'); // Default to Cloudinary upload
     setDeliveryUrlInput(ord.deliveryLink || '');
     setDeliveryVideoFile(null);
     setDeliveryAdminNotes(ord.adminNotes || '');

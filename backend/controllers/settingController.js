@@ -74,7 +74,8 @@ const testCloudinaryConnection = async (req, res) => {
     }
 
     // Call Cloudinary ping API to verify signature and credentials
-    const pingRes = await cloudinary.api.ping();
+    // Use configResult.cloudinary (freshly configured with DB credentials), not the bare global import
+    const pingRes = await configResult.cloudinary.api.ping();
     res.json({
       success: true,
       message: `✅ Cloudinary connected successfully for cloud: "${configResult.cloudName}"! (Ping status: ${pingRes.status})`,
