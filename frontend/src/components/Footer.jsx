@@ -83,9 +83,11 @@ const Footer = () => {
           {/* Brand Col */}
           <div className="lg:col-span-2 space-y-4">
             <Link to="/" className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-lg bg-brand-yellow flex items-center justify-center text-black font-black">
-                <Play className="w-5 h-5 fill-black" />
-              </div>
+              <img
+                src="/logo.png"
+                alt="DipuEditX Logo"
+                className="w-9 h-9 object-contain"
+              />
               <span className="text-xl font-black text-white tracking-tight">
                 Dipu<span className="text-brand-yellow">EditX</span>
               </span>
@@ -194,15 +196,31 @@ const Footer = () => {
 
         </div>
 
-        {/* Bottom Copyright & Legal */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+        {/* Bottom Copyright, Legal & Developer Credits */}
+        <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500 text-center md:text-left">
+          {/* Left: Copyright */}
           <p>© {new Date().getFullYear()} DipuEditX (dipueditx.in). All rights reserved. Managed by Dipu Sah.</p>
-          <div className="flex flex-wrap gap-4">
-            <Link to="/privacy-policy" className="hover:text-slate-300">Privacy Policy</Link>
-            <Link to="/terms-conditions" className="hover:text-slate-300">Terms of Service</Link>
-            <Link to="/return-policy" className="hover:text-slate-300">Return & Refund Policy</Link>
-            <Link to="/admin/login" className="text-slate-600 hover:text-slate-400">Admin</Link>
+          
+          {/* Middle: Legal Links */}
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <Link to="/privacy-policy" className="hover:text-slate-300 transition-colors">Privacy Policy</Link>
+            <Link to="/terms-conditions" className="hover:text-slate-300 transition-colors">Terms of Service</Link>
+            <Link to="/return-policy" className="hover:text-slate-300 transition-colors">Return & Refund Policy</Link>
+            <Link to="/admin/login" className="text-slate-600 hover:text-slate-400 transition-colors">Admin</Link>
           </div>
+
+          {/* Right: Developer Credit */}
+          <p className="text-slate-400 font-medium">
+            Developed by{' '}
+            <a
+              href="https://easyuverse.shop"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-brand-yellow hover:underline font-bold"
+            >
+              easyuverse.shop
+            </a>
+          </p>
         </div>
 
       </div>

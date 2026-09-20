@@ -48,11 +48,13 @@ const Navbar = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             
-            {/* Clean Logo */}
+            {/* Logo */}
             <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
-              <div className="w-9 h-9 rounded-xl bg-brand-yellow flex items-center justify-center text-black font-black shadow-md shadow-yellow-500/20 group-hover:scale-105 transition-transform">
-                <Play className="w-4 h-4 fill-black ml-0.5" />
-              </div>
+              <img
+                src="/logo.png"
+                alt="DipuEditX Logo"
+                className="w-9 h-9 object-contain rounded-lg group-hover:scale-105 transition-transform"
+              />
               <div className="flex flex-col">
                 <span className="text-xl font-black tracking-tight text-white flex items-center gap-1.5 leading-none">
                   Dipu<span className="text-brand-yellow">EditX</span>

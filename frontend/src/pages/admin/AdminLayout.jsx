@@ -89,9 +89,11 @@ const AdminLayout = () => {
           {/* Admin Header */}
           <div className="p-6 border-b border-brand-border/80">
             <Link to="/" className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-lg bg-brand-yellow flex items-center justify-center text-black font-black">
-                <Play className="w-4 h-4 fill-black" />
-              </div>
+              <img
+                src="/logo.png"
+                alt="DipuEditX Logo"
+                className="w-8 h-8 object-contain"
+              />
               <span className="text-lg font-black text-white">
                 Dipu<span className="text-brand-yellow">EditX</span>
               </span>
