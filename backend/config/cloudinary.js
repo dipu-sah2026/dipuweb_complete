@@ -4,7 +4,7 @@ const Setting = require('../models/Setting');
 // Helper to clean and sanitize credential strings
 const cleanStr = (val) => {
   if (!val || typeof val !== 'string') return '';
-  return val.trim().replace(/^['"]|['"]$/g, '');
+  return val.trim().replace(/^['"]|['"]$/g, '').replace(/[\r\n\t\s]/g, '');
 };
 
 // Dynamically configure Cloudinary from Admin DB Settings or process.env

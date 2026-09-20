@@ -43,13 +43,26 @@ router.post('/media', protect, adminOnly, upload.videoUpload.single('file'), asy
       public_id: uniquePublicId,
     };
 
-    if (isVideo && req.file.size > 20 * 1024 * 1024 && typeof config.cloudinary.uploader.upload_large === 'function') {
-      uploadRes = await config.cloudinary.uploader.upload_large(filePath, {
-        ...uploadOptions,
-        chunk_size: 6000000, // 6MB chunks
-      });
-    } else {
-      uploadRes = await config.cloudinary.uploader.upload(filePath, uploadOptions);
+    try {
+      if (isVideo && req.file.size > 20 * 1024 * 1024 && typeof config.cloudinary.uploader.upload_large === 'function') {
+        uploadRes = await config.cloudinary.uploader.upload_large(filePath, {
+          ...uploadOptions,
+          chunk_size: 6000000, // 6MB chunks
+        });
+      } else {
+        uploadRes = await config.cloudinary.uploader.upload(filePath, uploadOptions);
+      }
+    } catch (firstErr) {
+      // Fallback: If 'video' resource_type returned 403, try 'auto'
+      if (resourceType === 'video') {
+        console.warn('[Upload API] Video resource_type upload failed, retrying with resource_type: "auto"...');
+        uploadRes = await config.cloudinary.uploader.upload(filePath, {
+          ...uploadOptions,
+          resource_type: 'auto',
+        });
+      } else {
+        throw firstErr;
+      }
     }
 
     // Remove local temp file
@@ -83,13 +96,15 @@ router.post('/media', protect, adminOnly, upload.videoUpload.single('file'), asy
     let rawDetails = error.error?.message || error.message || String(error);
     console.error('[Upload API Error Raw]:', error);
 
-    let errorMsg = `Cloudinary Upload Error (${rawDetails})`;
+    let errorMsg = `Cloudinary Upload Error: ${rawDetails}`;
     if (rawDetails.includes('Invalid Signature')) {
       errorMsg = 'Cloudinary "Invalid Signature" error: Aapka Cloudinary API Secret galat hai ya match nahi ho raha. Kripya /admin/settings me jakar sahi API Secret dalein aur "Test Connection" karein.';
     } else if (rawDetails.includes('Invalid API Key') || rawDetails.includes('Unknown API key')) {
       errorMsg = 'Cloudinary "Invalid API Key" error: Aapki API Key match nahi hui. Kripya /admin/settings me check karein.';
     } else if (rawDetails.includes('Must supply api_secret')) {
       errorMsg = 'Cloudinary API Secret missing hai. Kripya /admin/settings me jakar API Secret dalein.';
+    } else if (rawDetails.includes('403') || rawDetails.includes('unexpected status code - 403')) {
+      errorMsg = 'Cloudinary 403 Forbidden Error: AAPKA CLOUDINARY ACCOUNT VERIFIED NAHI HAI ya Video Upload RESTRICTED hai. Kripya apne Email Inbox mein jaakar Cloudinary ka Activation Link click karein, ya Cloudinary Console -> Settings -> Security mein "Unsigned / Signed Upload" check karein.';
     }
 
     res.status(400).json({
