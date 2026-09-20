@@ -254,7 +254,8 @@ const OrderPage = () => {
   };
 
   const getAppPaymentUri = (scheme) => {
-    const base = `pa=${activeUpiId}&pn=${encodeURIComponent(activeUpiName)}&am=${finalPrice}&cu=INR&tn=${encodeURIComponent('DipuEditX Video Order')}`;
+    // Omit 'tn' parameter to bypass NPCI P2P security filter on personal VPAs
+    const base = `pa=${activeUpiId}&pn=${encodeURIComponent(activeUpiName)}&am=${finalPrice}&cu=INR`;
     const standardUpi = `upi://pay?${base}`;
     const isAndroid = /android/i.test(navigator.userAgent || '');
 
@@ -284,14 +285,14 @@ const OrderPage = () => {
     }
 
     setPaymentAppOpened(true);
-    setClipboardNotice(`✅ UPI ID "${activeUpiId}" copied! Opening ${appName}... Payment complete karke 12-digit UTR copy karein.`);
+    setClipboardNotice(`✅ UPI ID "${activeUpiId}" auto-copied! Opening ${appName}... (Agar app me security decline aaye, to "Pay to UPI ID" me paste karke ₹${finalPrice} pay karein).`);
 
     // 2. Open payment app intent with fallback
     const uri = getAppPaymentUri(scheme);
     try {
       window.location.href = uri;
     } catch (err) {
-      window.location.href = `upi://pay?pa=${activeUpiId}&pn=${encodeURIComponent(activeUpiName)}&am=${finalPrice}&cu=INR&tn=${encodeURIComponent('DipuEditX Video Order')}`;
+      window.location.href = `upi://pay?pa=${activeUpiId}&pn=${encodeURIComponent(activeUpiName)}&am=${finalPrice}&cu=INR`;
     }
   };
 
