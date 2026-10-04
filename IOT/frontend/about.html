@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Health Monitoring & Emergency Alert System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- NAVIGATION BAR -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="brand-logo">
+                <div class="brand-icon">🏥</div>
+                <span>HealthPulse IoT</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="about.html" class="nav-link active">About</a></li>
+                <li><a href="contact.html" class="nav-link">Contact</a></li>
+                <li><a href="api.html" class="nav-link">API</a></li>
+                <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
+            </ul>
+            <div id="nav-auth-container">
+                <a href="login.html" class="nav-link btn-nav-primary">Sign In</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        <div style="max-width: 900px; margin: 0 auto;">
+            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem;">About Project</h1>
+            <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 2.5rem;">
+                An end-to-end IoT Health Monitoring Website designed to continuously acquire physiological metrics (Body Temperature and Blood Pressure) via hardware sensors and deliver real-time emergency alert notifications.
+            </p>
+
+            <div class="card" style="margin-bottom: 2rem;">
+                <h2 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 1rem; color: #38bdf8;">🎯 Key Objectives</h2>
+                <ul style="padding-left: 1.5rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.8rem;">
+                    <li><strong>Continuous Health Tracking:</strong> Fetch live Body Temperature (°F) and Blood Pressure (mmHg) data from hardware sensors using HTTP REST APIs.</li>
+                    <li><strong>Panic Alert Button:</strong> Immediate emergency alert detection when patient activates the sensor's physical panic button.</li>
+                    <li><strong>User Authentication:</strong> Secure OTP-based authentication system using Mobile Number or Gmail.</li>
+                    <li><strong>Full Stack Integration:</strong> Responsive HTML/CSS/JS web dashboard connected to PHP & MySQL database.</li>
+                </ul>
+            </div>
+
+            <div class="card" style="margin-bottom: 2rem;">
+                <h2 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 1rem; color: #38bdf8;">🛠️ Technology Stack</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div style="background: var(--surface-bg); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <strong>Frontend:</strong> HTML5, CSS3, JavaScript (ES6+), Chart.js
+                    </div>
+                    <div style="background: var(--surface-bg); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <strong>Backend:</strong> PHP 8+, PDO MySQL Database Handler
+                    </div>
+                    <div style="background: var(--surface-bg); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <strong>Database:</strong> MySQL (users, health_data, alerts, api_devices)
+                    </div>
+                    <div style="background: var(--surface-bg); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <strong>Hardware / API:</strong> JSON REST Endpoint, ESP8266 / ESP32 Sensor Compatibility
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 1rem; color: #38bdf8;">📊 Database Architecture</h2>
+                <pre class="code-snippet">
+-- MySQL Database Tables Structure:
+1. `users` (id, name, mobile, email, otp, otp_expiry, created_at)
+2. `health_data` (id, user_id, temperature, blood_pressure, systolic, diastolic, emergency, created_at)
+3. `alerts` (id, user_id, alert_message, alert_type, status, created_at)
+4. `api_devices` (id, user_id, api_key, device_name, status, created_at)
+                </pre>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div>HealthPulse IoT Monitoring System &copy; 2026</div>
+            <div>College IoT Project</div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

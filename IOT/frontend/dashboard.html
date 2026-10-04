@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Dashboard - Health Monitoring & Emergency Alert System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Chart.js for real-time health data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <!-- NAVIGATION BAR -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="brand-logo">
+                <div class="brand-icon">🏥</div>
+                <span>HealthPulse IoT</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="about.html" class="nav-link">About</a></li>
+                <li><a href="contact.html" class="nav-link">Contact</a></li>
+                <li><a href="api.html" class="nav-link">API</a></li>
+                <li><a href="dashboard.html" class="nav-link active">Dashboard</a></li>
+            </ul>
+            <div id="nav-auth-container">
+                <a href="login.html" class="nav-link btn-nav-primary">Sign In</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN DASHBOARD CONTENT -->
+    <main class="main-content">
+
+        <!-- DASHBOARD HEADER -->
+        <div class="dashboard-header">
+            <div class="dashboard-title">
+                <h2>Patient Health Dashboard</h2>
+                <p>Welcome, <span id="welcome-user-name" style="color: #06b6d4; font-weight:700;">Rahul Sharma</span> | Real-time Sensor Monitoring</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div id="system-status-badge" class="status-badge status-normal">
+                    🟢 <span>System Operational</span>
+                </div>
+                <button onclick="fetchDashboardData()" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.85rem;">
+                    🔄 Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- EMERGENCY FLASHING ALERT BANNER (Triggers when emergency = true) -->
+        <div id="emergency-banner" class="emergency-alert-banner" style="display: none;">
+            <div class="emergency-info">
+                <div class="emergency-icon">🚨</div>
+                <div class="emergency-text">
+                    <h3>EMERGENCY ALERT!</h3>
+                    <p id="alert-message-text">Emergency button has been activated. Please check the patient immediately.</p>
+                </div>
+            </div>
+            <div>
+                <button id="resolve-alert-btn" class="btn btn-secondary" style="background: rgba(255,255,255,0.2); border-color: #fff; color: #fff;">
+                    ✅ Resolve & Dismiss Alert
+                </button>
+            </div>
+        </div>
+
+        <!-- 4 MAIN HEALTH METRIC CARDS -->
+        <div class="metrics-grid">
+            <!-- 1. Body Temperature Card -->
+            <div class="metric-card temp">
+                <div class="metric-header">
+                    <span class="metric-title">Body Temperature</span>
+                    <div class="metric-icon bg-temp">🌡️</div>
+                </div>
+                <div class="metric-value-box">
+                    <span class="metric-value" id="temp-value">98.6</span>
+                    <span class="metric-unit">°F</span>
+                </div>
+                <div class="metric-footer">
+                    <span>Normal Range: 97.0 - 99.0 °F</span>
+                    <span style="color: #10b981; font-weight: 600;">Optimal</span>
+                </div>
+            </div>
+
+            <!-- 2. Blood Pressure Card -->
+            <div class="metric-card bp">
+                <div class="metric-header">
+                    <span class="metric-title">Blood Pressure</span>
+                    <div class="metric-icon bg-bp">❤️</div>
+                </div>
+                <div class="metric-value-box">
+                    <span class="metric-value" id="bp-value">120/80</span>
+                    <span class="metric-unit">mmHg</span>
+                </div>
+                <div class="metric-footer">
+                    <span>Normal: 120/80 mmHg</span>
+                    <span style="color: #38bdf8; font-weight: 600;">Systolic/Diastolic</span>
+                </div>
+            </div>
+
+            <!-- 3. Alert Status Message Card -->
+            <div class="metric-card alert-card">
+                <div class="metric-header">
+                    <span class="metric-title">Alert Message</span>
+                    <div class="metric-icon bg-alert">🚨</div>
+                </div>
+                <div style="font-size: 1.1rem; font-weight: 700; color: #f8fafc; margin-bottom: 0.5rem; min-height: 44px;" id="dashboard-alert-text">
+                    🟢 No Emergency Alert
+                </div>
+                <div class="metric-footer">
+                    <span>Panic Button: Inactive</span>
+                    <span style="color: #10b981; font-weight: 600;">All Clear</span>
+                </div>
+            </div>
+
+            <!-- 4. System Status & Last Updated Card -->
+            <div class="metric-card status-card">
+                <div class="metric-header">
+                    <span class="metric-title">System Status & Time</span>
+                    <div class="metric-icon bg-status">🕐</div>
+                </div>
+                <div class="metric-value-box">
+                    <span style="font-size: 1.3rem; font-weight: 700; color: #38bdf8;" id="last-updated-time">10:30 PM</span>
+                </div>
+                <div class="metric-footer">
+                    <span>Live Auto Sync</span>
+                    <span style="color: #10b981; font-weight: 600;">● Polling (3s)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SENSOR SIMULATOR TOOLBAR FOR DEMO TESTING -->
+        <div class="card" style="margin-bottom: 2rem; background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #3b82f6;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h3 style="font-size: 1rem; font-weight: 700; color: #38bdf8; margin-bottom: 2px;">⚡ Hardware Sensor Test Controller</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">Simulate real hardware API payloads to test alerts live on this dashboard.</p>
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button onclick="simulateSensorAction('normal')" class="btn btn-secondary" style="padding: 8px 14px; font-size: 0.85rem;">🟢 Send Normal Data</button>
+                    <button onclick="simulateSensorAction('high_temp')" class="btn btn-secondary" style="padding: 8px 14px; font-size: 0.85rem; color: #f59e0b; border-color: #f59e0b;">🌡️ High Temp (101.8°F)</button>
+                    <button onclick="simulateSensorAction('high_bp')" class="btn btn-secondary" style="padding: 8px 14px; font-size: 0.85rem; color: #06b6d4; border-color: #06b6d4;">❤️ High BP (150/95)</button>
+                    <button onclick="simulateSensorAction('emergency')" class="btn btn-danger" style="padding: 8px 14px; font-size: 0.85rem;">🚨 PRESS EMERGENCY BUTTON</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHARTS SECTION -->
+        <div class="dashboard-charts-grid">
+            <!-- Temperature Chart -->
+            <div class="card">
+                <div class="card-title">
+                    <span>🌡️ Body Temperature History</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">°F vs Time</span>
+                </div>
+                <div style="height: 250px; position: relative;">
+                    <canvas id="tempChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Blood Pressure Chart -->
+            <div class="card">
+                <div class="card-title">
+                    <span>❤️ Blood Pressure History</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">mmHg vs Time</span>
+                </div>
+                <div style="height: 250px; position: relative;">
+                    <canvas id="bpChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- RECENT SENSOR READINGS TABLE -->
+        <div class="card">
+            <div class="card-title">
+                <span>📋 Recent Sensor Readings Log</span>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">Last 8 Data Packets</span>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Temperature (°F)</th>
+                            <th>Blood Pressure (mmHg)</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body">
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div>HealthPulse IoT Dashboard &copy; 2026</div>
+            <div>Real-time Patient Monitoring</div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

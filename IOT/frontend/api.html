@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Configuration - Health Monitoring System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- NAVIGATION BAR -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="brand-logo">
+                <div class="brand-icon">🏥</div>
+                <span>HealthPulse IoT</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="about.html" class="nav-link">About</a></li>
+                <li><a href="contact.html" class="nav-link">Contact</a></li>
+                <li><a href="api.html" class="nav-link active">API</a></li>
+                <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
+            </ul>
+            <div id="nav-auth-container">
+                <a href="login.html" class="nav-link btn-nav-primary">Sign In</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="main-content">
+        <div style="max-width: 900px; margin: 0 auto;">
+            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem;">API Configuration & Hardware Setup</h1>
+            <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 2rem;">
+                Connect hardware sensors (ESP8266, ESP32, Arduino) to PHP Backend via REST API Key authentication.
+            </p>
+
+            <!-- API KEY CONNECT CARD (From Prompt Specification Section 4) -->
+            <div class="card" style="margin-bottom: 2rem; border-color: #0d6efd;">
+                <h2 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1rem; color: #38bdf8;">🔑 API Authentication</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                    Enter your hardware sensor's API Key / API Number below to verify connection:
+                </p>
+
+                <div class="form-group">
+                    <label class="form-label">API Key / API Number</label>
+                    <div style="display: flex; gap: 12px;">
+                        <input type="text" id="user-api-key-input" class="form-control" value="HEALTH-API-998877665544332211" style="font-family: monospace; font-weight: 600; font-size: 1rem;">
+                        <button id="connect-api-btn" class="btn btn-primary" style="white-space: nowrap; padding: 0 28px;">
+                            CONNECT API
+                        </button>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button id="generate-new-key-btn" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.85rem;">
+                        🔄 Generate New API Key
+                    </button>
+                </div>
+
+                <div id="api-connection-status" style="display: none; margin-top: 1rem;">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- HARDWARE API PAYLOAD STRUCTURE (Section 5 from prompt) -->
+            <div class="card" style="margin-bottom: 2rem;">
+                <h2 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem;">📡 Hardware Sensor JSON Format</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                    Your IoT Sensor should send an HTTP POST request to <code>/backend/api/receive_sensor_data.php</code> with the following JSON structure:
+                </p>
+
+                <pre class="code-snippet">
+{
+  "api_key": "YOUR_API_KEY",
+  "temperature": 98.6,
+  "blood_pressure": "120/80",
+  "emergency": false
+}
+                </pre>
+            </div>
+
+            <!-- CODE EXAMPLES FOR DEVELOPERS -->
+            <div class="card">
+                <div class="card-title">
+                    <span>💻 Integration Code Snippets</span>
+                </div>
+
+                <h3 style="font-size: 1rem; color: #38bdf8; margin-top: 1rem; margin-bottom: 0.5rem;">cURL Command:</h3>
+                <div style="position: relative;">
+                    <pre class="code-snippet" id="snippet-curl"></pre>
+                    <button onclick="copySnippet('snippet-curl')" class="btn btn-secondary" style="position: absolute; top: 12px; right: 12px; padding: 4px 10px; font-size: 0.75rem;">Copy</button>
+                </div>
+
+                <h3 style="font-size: 1rem; color: #38bdf8; margin-top: 1.5rem; margin-bottom: 0.5rem;">ESP8266 / Arduino C++ Code:</h3>
+                <div style="position: relative;">
+                    <pre class="code-snippet" id="snippet-arduino"></pre>
+                    <button onclick="copySnippet('snippet-arduino')" class="btn btn-secondary" style="position: absolute; top: 12px; right: 12px; padding: 4px 10px; font-size: 0.75rem;">Copy</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div>HealthPulse IoT API Gateway &copy; 2026</div>
+            <div>REST API Documentation</div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/api.js"></script>
+</body>
+</html>

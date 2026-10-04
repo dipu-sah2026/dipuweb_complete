@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hardware Sensor Simulator - Health Monitoring</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../frontend/css/style.css">
+    <style>
+        .sim-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            background: var(--card-bg);
+            border: 2px solid #0d6efd;
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: 0 0 30px rgba(13, 110, 253, 0.25);
+        }
+        .slider-group {
+            margin-bottom: 1.5rem;
+        }
+        .slider-val {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #38bdf8;
+            float: right;
+        }
+        .panic-btn-wrapper {
+            text-align: center;
+            margin: 2rem 0;
+        }
+        .panic-btn {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ef4444 0%, #b91c1c 100%);
+            border: 6px solid #fca5a5;
+            color: white;
+            font-weight: 900;
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 0 35px rgba(239, 68, 68, 0.7);
+            transition: transform 0.1s ease, box-shadow 0.2s ease;
+        }
+        .panic-btn:active {
+            transform: scale(0.92);
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.9);
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../frontend/index.html" class="brand-logo">
+                <div class="brand-icon">📟</div>
+                <span>IoT Sensor Hardware Simulator</span>
+            </a>
+            <a href="../frontend/dashboard.html" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.85rem;">← Back to Dashboard</a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="sim-container">
+            <h2 style="text-align: center; margin-bottom: 0.5rem; font-weight: 800;">📟 Hardware Sensor Unit</h2>
+            <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+                Simulates physical ESP8266/ESP32 sensor payload transmission to PHP REST API endpoint.
+            </p>
+
+            <div class="form-group">
+                <label class="form-label">Sensor API Key</label>
+                <input type="text" id="sim-api-key" class="form-control" value="HEALTH-API-998877665544332211">
+            </div>
+
+            <div class="slider-group">
+                <label class="form-label">
+                    🌡️ Body Temperature: <span class="slider-val" id="temp-display">98.6 °F</span>
+                </label>
+                <input type="range" min="95.0" max="106.0" step="0.1" value="98.6" class="form-control" id="temp-slider" oninput="document.getElementById('temp-display').textContent = this.value + ' °F'">
+            </div>
+
+            <div class="slider-group">
+                <label class="form-label">
+                    ❤️ Blood Pressure (Systolic): <span class="slider-val" id="sys-display">120 mmHg</span>
+                </label>
+                <input type="range" min="80" max="190" step="1" value="120" class="form-control" id="sys-slider" oninput="document.getElementById('sys-display').textContent = this.value + ' mmHg'">
+            </div>
+
+            <div class="slider-group">
+                <label class="form-label">
+                    ❤️ Blood Pressure (Diastolic): <span class="slider-val" id="dia-display">80 mmHg</span>
+                </label>
+                <input type="range" min="50" max="120" step="1" value="80" class="form-control" id="dia-slider" oninput="document.getElementById('dia-display').textContent = this.value + ' mmHg'">
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 1.5rem;">
+                <button onclick="sendSensorData(false)" class="btn btn-primary" style="flex: 1;">
+                    📡 Transmit Telemetry Packet
+                </button>
+            </div>
+
+            <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
+
+            <div class="panic-btn-wrapper">
+                <button onclick="sendSensorData(true)" class="panic-btn">
+                    🚨<br>PRESS<br>EMERGENCY
+                </button>
+                <p style="color: #ef4444; font-weight: 700; font-size: 0.88rem; margin-top: 10px;">
+                    Clicking red button simulates physical sensor panic switch!
+                </p>
+            </div>
+
+            <div id="sim-response-box" class="code-snippet" style="display: none;">
+            </div>
+        </div>
+    </main>
+
+    <script src="../frontend/js/main.js"></script>
+    <script>
+        async function sendSensorData(isEmergency) {
+            const apiKey = document.getElementById('sim-api-key').value.trim();
+            const temp = parseFloat(document.getElementById('temp-slider').value);
+            const sys = parseInt(document.getElementById('sys-slider').value);
+            const dia = parseInt(document.getElementById('dia-slider').value);
+            const bpStr = `${sys}/${dia}`;
+
+            const payload = {
+                api_key: apiKey,
+                temperature: temp,
+                blood_pressure: bpStr,
+                emergency: isEmergency
+            };
+
+            const box = document.getElementById('sim-response-box');
+            box.style.display = 'block';
+            box.textContent = 'Sending payload to /backend/api/receive_sensor_data.php ...';
+
+            try {
+                const response = await fetch('../backend/api/receive_sensor_data.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const res = await response.json();
+                box.textContent = `[HTTP Status 200 OK]\n` + JSON.stringify(res, null, 2);
+                showToast(res.message, isEmergency ? 'emergency' : 'success');
+            } catch (err) {
+                box.textContent = 'Error sending request to backend API: ' + err.message;
+                showToast('Failed to reach backend endpoint', 'error');
+            }
+        }
+    </script>
+</body>
+</html>
