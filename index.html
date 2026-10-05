@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Monitoring & Emergency Alert System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- NAVIGATION BAR -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="brand-logo">
+                <div class="brand-icon">🏥</div>
+                <span>HealthPulse IoT</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html" class="nav-link active">Home</a></li>
+                <li><a href="about.html" class="nav-link">About</a></li>
+                <li><a href="contact.html" class="nav-link">Contact</a></li>
+                <li><a href="api.html" class="nav-link">API</a></li>
+                <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
+            </ul>
+            <div id="nav-auth-container">
+                <a href="login.html" class="nav-link btn-nav-primary">Sign In</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="main-content">
+        <!-- HERO SECTION -->
+        <section class="hero-section">
+            <div class="hero-text-col">
+                <div class="hero-badge">
+                    <span>📡 IoT Sensor Integration Enabled</span>
+                </div>
+                <h1 class="hero-title">Smart Health Monitoring & Emergency Alert System</h1>
+                <p class="hero-subtitle">Real-time continuous body temperature and blood pressure tracking paired with instant hardware emergency panic alert notifications.</p>
+                <div class="hero-actions">
+                    <a href="dashboard.html" class="btn btn-primary">📊 View Live Dashboard</a>
+                    <a href="api.html" class="btn btn-secondary">⚡ API Configuration</a>
+                    <a href="../simulator/sensor_simulator.html" class="btn btn-danger" target="_blank">🚨 Hardware Simulator</a>
+                </div>
+            </div>
+
+            <!-- LIVE MONITOR PREVIEW CARD -->
+            <div class="hero-card-preview">
+                <div class="hero-card-header">
+                    <div>
+                        <h3 style="font-size: 1.1rem; font-weight:700;">HEALTH MONITORING SYSTEM</h3>
+                        <p style="font-size: 0.82rem; color: var(--text-muted);">Real-time Sensor Feed</p>
+                    </div>
+                    <span class="status-badge status-normal">🟢 Sensor Online</span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div style="background: var(--surface-bg); padding: 1.2rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); text-align: center;">
+                        <div style="color: #f59e0b; font-size: 0.85rem; font-weight:600; margin-bottom: 4px;">🌡️ Body Temperature</div>
+                        <div style="font-size: 2rem; font-weight: 800;">98.6 <span style="font-size: 1rem; color: var(--text-muted);">°F</span></div>
+                    </div>
+                    <div style="background: var(--surface-bg); padding: 1.2rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); text-align: center;">
+                        <div style="color: #06b6d4; font-size: 0.85rem; font-weight:600; margin-bottom: 4px;">❤️ Blood Pressure</div>
+                        <div style="font-size: 2rem; font-weight: 800;">120/80 <span style="font-size: 0.85rem; color: var(--text-muted);">mmHg</span></div>
+                    </div>
+                </div>
+
+                <div style="background: var(--surface-bg); padding: 1.2rem; border-radius: var(--radius-md); border: 1px dashed var(--border-color); text-align: center;">
+                    <div style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; font-weight: 600; margin-bottom: 8px;">ALERT STATUS</div>
+                    <div class="status-badge status-normal" style="font-size: 1rem; padding: 8px 18px;">🟢 No Emergency Alert</div>
+                    <div style="margin-top: 10px; font-size: 0.82rem; color: var(--text-muted);">Last Updated: 10:30 PM</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SYSTEM ARCHITECTURE & FEATURES -->
+        <section style="margin-top: 4rem;">
+            <h2 style="text-align: center; font-size: 2rem; font-weight: 800; margin-bottom: 2.5rem;">How System Works</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem;">
+                <div class="card" style="text-align: center; padding: 2rem 1.5rem;">
+                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">📡</div>
+                    <h3 style="font-size: 1.2rem; font-weight:700; margin-bottom: 0.5rem;">1. Sensor Collection</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Hardware sensors collect body temperature, BP, and Emergency button state directly from patient.</p>
+                </div>
+                <div class="card" style="text-align: center; padding: 2rem 1.5rem;">
+                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">⚡</div>
+                    <h3 style="font-size: 1.2rem; font-weight:700; margin-bottom: 0.5rem;">2. REST API Sync</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Sensors send encrypted JSON payloads to PHP Backend API with device API Authentication key.</p>
+                </div>
+                <div class="card" style="text-align: center; padding: 2rem 1.5rem;">
+                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">💾</div>
+                    <h3 style="font-size: 1.2rem; font-weight:700; margin-bottom: 0.5rem;">3. PHP & MySQL Storage</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">PHP Backend validates payload, stores metrics in MySQL database tables, and detects threshold breaches.</p>
+                </div>
+                <div class="card" style="text-align: center; padding: 2rem 1.5rem;">
+                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">🚨</div>
+                    <h3 style="font-size: 1.2rem; font-weight:700; margin-bottom: 0.5rem;">4. Emergency Alerts</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Instant web dashboard popup, audio alarm, and SMS/Email notification dispatched to logged-in user.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div>
+                <strong>HealthPulse IoT Monitoring System</strong> &copy; 2026. All rights reserved.
+            </div>
+            <div>
+                College Project Specification | PHP + MySQL + IoT Hardware REST API
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
